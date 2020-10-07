@@ -1,3 +1,4 @@
+package arp;
 
 import java.awt.Color;
 import java.awt.Container;
@@ -71,11 +72,10 @@ public class ChatFileDlg extends JFrame implements BaseLayer {
 		과제  */
 		m_LayerMgr.AddLayer(new NILayer("NI"));
 		m_LayerMgr.AddLayer(new EthernetLayer("Ethernet"));
-		m_LayerMgr.AddLayer(new ChatAppLayer("ChatApp"));
-		m_LayerMgr.AddLayer(new FileAppLayer("FileApp"));
+		m_LayerMgr.AddLayer(new ARPLayer("ARP"));
 		m_LayerMgr.AddLayer(new ChatFileDlg("GUI"));
 
-		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ChatApp ( *GUI ) *FileApp ( +GUI ) )");
+		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *GUI ) )");
 	}
 
 	public ChatFileDlg(String pName) {
