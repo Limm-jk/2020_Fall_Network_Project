@@ -65,18 +65,18 @@ public class ChatFileDlg extends JFrame implements BaseLayer {
 
 	String Text;
 
-	public static void main(String[] args) {
-	
-		/*과제
-		// 흐름대로 레이어 연결해주는 부분.. 
-		과제  */
-		m_LayerMgr.AddLayer(new NILayer("NI"));
-		m_LayerMgr.AddLayer(new EthernetLayer("Ethernet"));
-		m_LayerMgr.AddLayer(new ARPLayer("ARP"));
-		m_LayerMgr.AddLayer(new ChatFileDlg("GUI"));
-
-		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *GUI ) )");
-	}
+//	public static void main(String[] args) {
+//	
+//		/*과제
+//		// 흐름대로 레이어 연결해주는 부분.. 
+//		과제  */
+//		m_LayerMgr.AddLayer(new NILayer("NI"));
+//		m_LayerMgr.AddLayer(new EthernetLayer("Ethernet"));
+//		m_LayerMgr.AddLayer(new ARPLayer("ARP"));
+//		m_LayerMgr.AddLayer(new ChatFileDlg("GUI"));
+//
+//		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *GUI ) )");
+//	}
 
 	public ChatFileDlg(String pName) {
 		pLayerName = pName;
