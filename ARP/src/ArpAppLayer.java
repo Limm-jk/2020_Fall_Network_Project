@@ -4,6 +4,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -39,8 +42,9 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 
 	private static LayerManager m_LayerMgr = new LayerManager();
 	
+	static int adapterNumber = 0;
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		NILayer niLayer = new NILayer("NI");
 		EthernetLayer ethernetLayer = new EthernetLayer("Ethernet");
 		ARPLayer arpLayer = new ARPLayer("ARP");
@@ -54,12 +58,10 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *GUI ) )");
 		
 		
-		
 	}
 	
 	
-	public ArpAppLayer(String pName) {
-		
+	public ArpAppLayer(String pName) throws IOException {
 		pLayerName = pName;
 		
 		setTitle("TestARP");
@@ -178,6 +180,16 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		contentPane.add(btnCancel);
 		
 		setVisible(true);
+		
+		
+		NILayer niLayer = (NILayer)m_LayerMgr.GetLayer("NI");
+		EthernetLayer ethernetLayer = (EthernetLayer)m_LayerMgr.GetLayer("Ethernet");
+		ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
+		
+		//arp Layer에 IP와 Mac 세팅
+		arpLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
+		arpLayer.setSrcMac(niLayer.GetAdapterObject(adapterNumber).getHardwareAddress());
+		
 	}
 	
 	class btnListener implements ActionListener{
@@ -186,7 +198,23 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 			/*----ARP Action-----*/
 			if(e.getSource() == ARP_IPSend) {
 				//IP 입력 후 send버튼 눌렀을 때
+				String inputIP = IPTextField.getText().trim();
 				
+				InetAddress ip = null;
+				try {
+					ip = InetAddress.getByName(inputIP);
+					byte[] dstIP = ip.getAddress();
+					
+					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
+					arpLayer.setDstIp(dstIP);
+					
+					arpLayer.Send(new byte[0], 0);
+					
+				} catch (UnknownHostException e1) {
+					e1.printStackTrace();
+				}
+				
+				IPTextField.setText("");
 			}
 			
 			else if(e.getSource() == ARPItemDelete) {
@@ -211,6 +239,22 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 				//GARP Send버튼을 눌렀을 때
 			}
 		}
+	}
+	
+	public String get_MacAddress(byte[] byte_MacAddress) { //MAC Byte주소를 String으로 변환
+
+		String MacAddress = "";
+		for (int i = 0; i < 6; i++) { 
+			//2자리 16진수를 대문자로, 그리고 1자리 16진수는 앞에 0을 붙임.
+			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
+			
+			if (i != 5) {
+				//2자리 16진수 자리 단위 뒤에 "-"붙여주기
+				MacAddress += "-";
+			}
+		} 
+		System.out.println("mac_address:" + MacAddress);
+		return MacAddress;
 	}
 	
 	@Override
