@@ -19,9 +19,10 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import arp.ChatFileDlg.setAddressListener;
+//import arp.ChatFileDlg.setAddressListener;
+//import arp.BaseLayer;
 
-public class ArpAppLayer extends JFrame implements BaseLayer{
+public class ArpAppLayer extends JFrame implements BaseLayer {
 	public int nUpperLayerCount = 0;
 	public String pLayerName = null;
 	public BaseLayer p_UnderLayer = null;
@@ -87,8 +88,8 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		ARPTextArea.setRows(10);
 		ARPPanel.add(ARPTextArea);
 		
-		JLabel lblNewLabel = new JLabel("IP주소");
-		lblNewLabel.setFont(new Font("돋움", Font.BOLD, 14));
+		JLabel lblNewLabel = new JLabel("IP二쇱냼");
+		lblNewLabel.setFont(new Font("�룍��", Font.BOLD, 14));
 		lblNewLabel.setBounds(16, 295, 52, 36);
 		ARPPanel.add(lblNewLabel);
 		
@@ -144,8 +145,8 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		contentPane.add(GARPPanel);
 		GARPPanel.setLayout(null);
 		
-		JLabel lblNewLabel_1 = new JLabel("H/W 주소");
-		lblNewLabel_1.setFont(new Font("돋움", Font.BOLD, 16));
+		JLabel lblNewLabel_1 = new JLabel("H/W 二쇱냼");
+		lblNewLabel_1.setFont(new Font("�룍��", Font.BOLD, 16));
 		lblNewLabel_1.setBounds(12, 41, 74, 36);
 		GARPPanel.add(lblNewLabel_1);
 		
@@ -160,8 +161,8 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		GARPPanel.add(GARPSend);
 		
 		
-		/*-----종료, 취소-----*/
-		JButton btnEnd = new JButton("종료");
+		/*-----醫낅즺, 痍⑥냼-----*/
+		JButton btnEnd = new JButton("醫낅즺");
 		btnEnd.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setVisible(false);
@@ -170,7 +171,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		btnEnd.setBounds(334, 396, 114, 42);
 		contentPane.add(btnEnd);
 		
-		JButton btnCancel = new JButton("취소");
+		JButton btnCancel = new JButton("痍⑥냼");
 		btnCancel.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setVisible(false);
@@ -186,7 +187,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		EthernetLayer ethernetLayer = (EthernetLayer)m_LayerMgr.GetLayer("Ethernet");
 		ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 		
-		//arp Layer에 IP와 Mac 세팅
+		//arp Layer�뿉 IP�� Mac �꽭�똿
 		arpLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
 		arpLayer.setSrcMac(niLayer.GetAdapterObject(adapterNumber).getHardwareAddress());
 		
@@ -197,7 +198,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		public void actionPerformed(ActionEvent e) {
 			/*----ARP Action-----*/
 			if(e.getSource() == ARP_IPSend) {
-				//IP 입력 후 send버튼 눌렀을 때
+				//IP �엯�젰 �썑 send踰꾪듉 �닃���쓣 �븣
 				String inputIP = IPTextField.getText().trim();
 				
 				InetAddress ip = null;
@@ -218,38 +219,38 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 			}
 			
 			else if(e.getSource() == ARPItemDelete) {
-				//ItemDelete 버튼을 눌렀을 때
+				//ItemDelete 踰꾪듉�쓣 �닃���쓣 �븣
 			}
 			
 			else if(e.getSource() == ARPAllDelete) {
-				//AllDelete 버튼을 눌렀을 때
+				//AllDelete 踰꾪듉�쓣 �닃���쓣 �븣
 			}
 			
 			/*----- Proxy Action -----*/
 			else if(e.getSource() == ProxyAdd) {
-				//Add 버튼을 눌렀을 때
+				//Add 踰꾪듉�쓣 �닃���쓣 �븣
 			}
 			
 			else if(e.getSource() == ProxyDelete) {
-				//Delete 버튼을 눌렀을 때
+				//Delete 踰꾪듉�쓣 �닃���쓣 �븣
 			}
 			
 			/*----- GARP Action -----*/
 			else if(e.getSource() == GARPSend) {
-				//GARP Send버튼을 눌렀을 때
+				//GARP Send踰꾪듉�쓣 �닃���쓣 �븣
 			}
 		}
 	}
 	
-	public String get_MacAddress(byte[] byte_MacAddress) { //MAC Byte주소를 String으로 변환
+	public String get_MacAddress(byte[] byte_MacAddress) { //MAC Byte二쇱냼瑜� String�쑝濡� 蹂��솚
 
 		String MacAddress = "";
 		for (int i = 0; i < 6; i++) { 
-			//2자리 16진수를 대문자로, 그리고 1자리 16진수는 앞에 0을 붙임.
+			//2�옄由� 16吏꾩닔瑜� ��臾몄옄濡�, 洹몃━怨� 1�옄由� 16吏꾩닔�뒗 �븵�뿉 0�쓣 遺숈엫.
 			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
 			
 			if (i != 5) {
-				//2자리 16진수 자리 단위 뒤에 "-"붙여주기
+				//2�옄由� 16吏꾩닔 �옄由� �떒�쐞 �뮘�뿉 "-"遺숈뿬二쇨린
 				MacAddress += "-";
 			}
 		} 
