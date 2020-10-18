@@ -3,76 +3,100 @@ package arp;
 import java.util.ArrayList;
 
 
-public class IPLayer implements BaseLayer {
+public class IPLayer implements BaseLayer{
 	public int nUpperLayerCount = 0;
-    public String pLayerName = null;
-    public BaseLayer p_UnderLayer = null;
-    public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
-
-    _IP_HEADER m_iHeader = new _IP_HEADER();
-    int HeaderSize = 8;
-    EthernetLayer ethernetLayer;
-    
-    private class _IP_HEADER {
-        byte[] srcIP;
-        byte[] destIP;
-		public Object capp_totlen;
-		public byte capp_type;
-
-        public void setSrcIP(byte[] srcIP) {
-            this.srcIP = srcIP;
-        }
-
-        public void setDestIP(byte[] destIP) {
-            this.destIP = destIP;
-        }
-
-        public _IP_HEADER() {
-            srcIP = new byte[4];
-            destIP = new byte[4];
-        }
-    }
-    
-    private byte[] ObjToByte(_IP_HEADER Header, byte[] input, int length) {
-        //«Ï¥ı ∫Ÿ¿Ã¥¬ ∞˜. ∏∏£∞⁄¿Ω...
-    	return input;
-    }
-    public byte[] RemoveHeader(byte[] input, int length) {
-    	int inputLength = input.length;
-        byte[] buf = new byte[inputLength - HeaderSize];
-
-        // mac ¡÷º“ø° ∞¸«— ¡§∫∏∏¶ ªË¡¶«—¥Ÿ.
-        for (int i = HeaderSize; i < inputLength; i++) {
-            buf[i - HeaderSize] = input[i];
-        }
-        // ªË¡¶«— ¡§∫∏∏¶ π›»Ø«—¥Ÿ.
-        return buf;
-    }
-    private byte[] intToByte2(int value) {
-        byte[] temp = new byte[2];
-        temp[0] |= (byte) ((value & 0xFF00) >> 8);
-        temp[1] |= (byte) (value & 0xFF);
-
-        return temp;
-    }
-    
-    
-	@Override
-	public boolean Send(byte[] input, int length) {
-		m_iHeader.capp_totlen = intToByte2(length);
-        m_iHeader.capp_type = (byte) (0x00);
+	public String pLayerName = null;
+	public BaseLayer p_UnderLayer = null;
+	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
+	IPHeader m_sHeader = new IPHeader();
+	
+	public IPLayer(String pName) {
+		pLayerName = pName;
+	}
+	
+	private static class IPHeader{
+		byte ip_verlen;
+		byte ip_tos;
+		byte[] ip_len = new byte[2];
+		byte[] ip_id = new byte[2];
+		byte[] ip_fragoff = new byte[2];
+		byte ip_ttl;
+		byte ip_proto;
+		byte[] ip_cksum = new byte[2];
+		byte[] ip_src = new byte[4];
+		byte[] ip_dst = new byte[4];
 		
-		byte[] bytes = ObjToByte(m_iHeader, input, length);
-		this.GetUnderLayer().Send(bytes, length + HeaderSize);
+		public IPHeader() {
+			
+		}
+		
+		public void setSrcIp(byte[] ip) {
+			this.ip_src = ip;
+		}
+		public void setDstIp(byte[] ip) {
+			this.ip_dst = ip;
+		}
+	}
+	
+	public void setSrcIp(byte[] ip) {
+		m_sHeader.ip_src = ip;
+	}
+	public void setDstIp(byte[] ip) {
+		m_sHeader.ip_dst = ip;
+	}
+	
+	public byte[] ObjToByte(IPHeader Header, byte[] input, int length) {
+		//28byteÏùò arpÌó§Îçî Î∂ôÏù¥Í∏∞
+		byte[] buf = new byte[length+20];
+		
+		for(int i = 0; i < 20; i++) {
+			if(i == 0) {
+				buf[i] = Header.ip_verlen;
+			}
+			else if (i==1) {
+				buf[i] = Header.ip_tos;
+			}
+			else if (2 <= i && i <= 3) {
+				buf[i] = Header.ip_len[i-2];
+			}
+			else if (4 <= i && i <= 5) {
+				buf[i] = Header.ip_id[i-4];
+			}
+			else if (i == 6 || i == 7) {
+				buf[i] = Header.ip_fragoff[i-6];
+			}
+			else if (i == 8) {
+				buf[i] = Header.ip_ttl;
+			}
+			else if (i == 9) {
+				buf[i] = Header.ip_proto;
+			}
+			else if (10 <= i && i <= 11) {
+				buf[i] = Header.ip_cksum[i-10];
+			}
+			else if (12 <= i && i <= 15) {
+				buf[i] = Header.ip_src[i-12];
+			}
+			else if (16 <= i && i <= 19) {
+				buf[i] = Header.ip_dst[i-16];
+			}
+		}
+		System.arraycopy(input, 0, buf, 20, length);
+		return buf;
+	}
+	
+	public boolean Send(byte[] input, int length) {
+		byte[] bytes = ObjToByte(m_sHeader, input, length);
+		GetUnderLayer().Send(bytes, bytes.length);
 		return true;
 	}
-    @Override
-    public synchronized boolean Receive(byte[] input) {
-    	// TODO Auto-generated method stub
-    	return BaseLayer.super.Receive(input);
-    }
-    
-    @Override
+	
+	public boolean Receive(byte[] input) {
+		
+		return true;
+	}
+	
+	@Override
     public String GetLayerName() {
         // TODO Auto-generated method stub
         return pLayerName;
@@ -108,8 +132,6 @@ public class IPLayer implements BaseLayer {
         if (pUpperLayer == null)
             return;
         this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
-        // nUpperLayerCount++;
-
     }
 
     @Override

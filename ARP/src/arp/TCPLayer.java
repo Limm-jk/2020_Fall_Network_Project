@@ -4,55 +4,87 @@ import java.util.ArrayList;
 
 public class TCPLayer implements BaseLayer{
 	public int nUpperLayerCount = 0;
-    public String pLayerName = null;
-    public BaseLayer p_UnderLayer = null;
-    public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
-    
-    _TCP_HEADER m_tHeader = new _TCP_HEADER();
-    int HeaderSize = 0;
-
-    private class _TCP_HEADER {
-    	//헤더 뭐넣어야 할지 몰겠음... ㅠㅠ
-    }
-    
-    private byte[] ObjToByte(_TCP_HEADER Header, byte[] input, int length) {
-        //헤더 붙이는 곳. 모르겠음...
-    	return input;
-    }
-    public byte[] RemoveHeader(byte[] input, int length) {
-    	int inputLength = input.length;
-        byte[] buf = new byte[inputLength - HeaderSize];
-
-        // mac 주소에 관한 정보를 삭제한다.
-        for (int i = HeaderSize; i < inputLength; i++) {
-            buf[i - HeaderSize] = input[i];
-        }
-        // 삭제한 정보를 반환한다.
-        return buf;
-    }
-    private byte[] intToByte2(int value) {
-        byte[] temp = new byte[2];
-        temp[0] |= (byte) ((value & 0xFF00) >> 8);
-        temp[1] |= (byte) (value & 0xFF);
-
-        return temp;
-    }
-    
-    
-	@Override
-	public boolean Send(byte[] input, int length) {
+	public String pLayerName = null;
+	public BaseLayer p_UnderLayer = null;
+	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
+	TCPHeader m_sHeader = new TCPHeader();
+	
+	public TCPLayer(String pName) {
+		pLayerName = pName;
+	}
+	
+	private static class TCPHeader{
+		byte[] tcp_sport = new byte[2];
+		byte[] tcp_dport = new byte[2];
+		byte[] tcp_seq = new byte[4];
+		byte[] tcp_ack = new byte[4];
+		byte tcp_offset;
+		byte tcp_flag;
+		byte[] tcp_window = new byte[2];
+		byte[] tcp_cksum = new byte[2];
+		byte[] tcp_urgptr = new byte[2];
+		byte[] padding = new byte[4];
 		
-		byte[] bytes = ObjToByte(m_tHeader, input, length);
-		this.GetUnderLayer().Send(bytes, length + HeaderSize);
+		public TCPHeader() {
+			
+		}
+	}
+	
+	public byte[] ObjToByte(TCPHeader Header, byte[] input, int length) {
+		byte[] buf = new byte[length+24];
+		
+		for(int i = 0; i < 24; i++) {
+			if(i == 0 || i == 1) {
+				buf[i] = Header.tcp_sport[i];
+			}
+			else if (i==2 || i==3) {
+				buf[i] = Header.tcp_dport[i-2];
+			}
+			else if (4 <= i && i <= 7) {
+				buf[i] = Header.tcp_seq[i-4];
+			}
+			else if (8 <= i && i <= 11) {
+				buf[i] = Header.tcp_ack[i-8];
+			}
+			else if (i == 12) {
+				buf[i] = Header.tcp_offset;
+			}
+			else if (i == 13) {
+				buf[i] = Header.tcp_flag;
+			}
+			else if (14 <= i && i <= 15) {
+				buf[i] = Header.tcp_window[i-14];
+			}
+			else if (16 <= i && i <= 17) {
+				buf[i] = Header.tcp_cksum[i-16];
+			}
+			else if (18 <= i && i <= 19) {
+				buf[i] = Header.tcp_urgptr[i-18];
+			}
+			else if (20 <= i && i <= 23) {
+				buf[i] = Header.padding[i-20];
+			}
+		}
+		System.arraycopy(input, 0, buf, 24, length);
+		return buf;
+	}
+	
+	public boolean Send(byte[] input, int length) {
+		byte[] bytes = ObjToByte(m_sHeader, input, length);
+		GetUnderLayer().Send(bytes, bytes.length);
 		return true;
 	}
-    @Override
-    public synchronized boolean Receive(byte[] input) {
-    	// TODO Auto-generated method stub
-    	return BaseLayer.super.Receive(input);
-    }
-    
-    @Override
+	
+	public boolean Receive(byte[] input) {
+		
+		
+		return true;
+	}
+	
+
+	
+	
+	@Override
     public String GetLayerName() {
         // TODO Auto-generated method stub
         return pLayerName;
@@ -88,8 +120,6 @@ public class TCPLayer implements BaseLayer{
         if (pUpperLayer == null)
             return;
         this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
-        // nUpperLayerCount++;
-
     }
 
     @Override
@@ -97,4 +127,5 @@ public class TCPLayer implements BaseLayer{
         this.SetUpperLayer(pUULayer);
         pUULayer.SetUnderLayer(this);
     }
+
 }

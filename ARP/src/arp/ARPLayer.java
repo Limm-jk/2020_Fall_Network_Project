@@ -3,6 +3,7 @@ package arp;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 // ARP 수행
 
@@ -12,6 +13,9 @@ public class ARPLayer implements BaseLayer{
 	public BaseLayer p_UnderLayer = null;
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
 	ARPHeader m_sHeader = new ARPHeader();
+	
+	// ARP Cache Table 생성
+	public static ArrayList<ARPCache> cache_table = new ArrayList<ARPCache>();
 	
 	public ARPLayer(String pName) {
 		pLayerName = pName;
@@ -28,7 +32,6 @@ public class ARPLayer implements BaseLayer{
 		byte[] srcIp = new byte[4];
 		byte[] dstMac = new byte[6];
 		byte[] dstIp = new byte[4];
-
 
 		public ARPHeader() {
 			hardType[1] = (byte)0x01;
@@ -68,7 +71,6 @@ public class ARPLayer implements BaseLayer{
 		m_sHeader.dstMac = mac;
 	}
 	
-	
 	//데이터에 header 붙이기
 	public byte[] ObjToByte(ARPHeader Header, byte[] input, int length) {
 		//28byte의 arp헤더 붙이기
@@ -107,16 +109,16 @@ public class ARPLayer implements BaseLayer{
 		return buf;
 	}
 	
-	
 	//send
 	public boolean Send(byte[] input, int length) {
 		m_sHeader.op[0] = (byte)0x00;
 		m_sHeader.op[1] = (byte)0x01;
 		
-		//ARP Cache List에 상대방 ip를 추가, mac은 ??로, status는 incomplete로 표시
-		/*####################
-		 * TODO
-		 #####################*/
+		//ARP Cache List에 상대방 ip를 추가, mac은 0x00000000로, status는 false로 표시
+		byte[] tempMac = new byte[6];
+		ARPCache arpcache = new ARPCache(m_sHeader.dstIp, tempMac, false);
+		//cache 테이블에 추가
+		cache_table.add(arpcache);
 		
 		
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
@@ -127,7 +129,6 @@ public class ARPLayer implements BaseLayer{
 	//receive
 	public boolean Receive(byte[] input) {
 		//input[7]은 op코드의 뒷 자리
-		
 		
 		//op가 0x01이면 arp request
 		if(input[7] == 0x01) {
@@ -140,11 +141,13 @@ public class ARPLayer implements BaseLayer{
 			System.arraycopy(input, 14, srcMac, 0, 4);
 			System.arraycopy(input, 24, dstIp, 0, 4);
 			
-			
 			//ARP Cache List에 상대방 ip와 mac을 추가
 			/*###############
 			 * TODO
 			 ################*/
+			
+			
+			//Proxy ARP 테이블도 확인
 			
 			if(dstIp.equals(m_sHeader.dstIp)) {
 				
@@ -158,6 +161,7 @@ public class ARPLayer implements BaseLayer{
 		
 		return true;
 	}
+	
 	
 	@Override
     public String GetLayerName() {
@@ -202,4 +206,59 @@ public class ARPLayer implements BaseLayer{
         this.SetUpperLayer(pUULayer);
         pUULayer.SetUnderLayer(this);
     }
+
+    
+    public class ARPCache{
+    	// ip주소, mac주소, status
+    	public byte[] ip = new byte[4];
+    	public byte[] mac = new byte[6];
+    	public boolean status;
+    	
+    	public ARPCache(byte[] ipAddress, byte[] macAddress, boolean status) {
+    		this.ip = ipAddress;
+    		this.mac = macAddress;
+    		this.status = status;
+    	}
+    }
+    
+    public byte[] src_dst_swap(byte[] input) {
+    	byte[] src = new byte[10];
+    	byte[] dst = new byte[10];
+    	
+    	System.arraycopy(input, 8, src, 0, 10);
+    	System.arraycopy(input, 14, dst, 0, 10);
+
+    	System.arraycopy(dst, 0, input, 8, 10);
+    	System.arraycopy(src, 0, input, 18, 10);
+    	
+    	return input;
+    }
+    
+    public void addARPCache(ARPCache cache) {
+    	cache_table.add(cache);
+    }
+    public void removeAll() {
+        cache_table.clear();
+    }
+    public void remove(byte[] ip) {
+    	Iterator<ARPCache> iter = cache_table.iterator();
+    	
+    	while(iter.hasNext()) {
+    		ARPCache cache = iter.next();
+    		if(Arrays.equals(ip, cache.ip)) {
+    			iter.remove();
+    		}
+    	}
+    }
+    public ARPCache getCache(byte[] ip) {
+    	Iterator<ARPCache> iter = cache_table.iterator();
+    	while(iter.hasNext()) {
+    		ARPCache cache = iter.next();
+    		if(Arrays.equals(ip, cache.ip)) {
+    			return cache;
+    		}
+    	}
+    	return null;
+    }
+    
 }
