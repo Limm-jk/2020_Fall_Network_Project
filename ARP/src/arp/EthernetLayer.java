@@ -65,12 +65,31 @@ public class EthernetLayer implements BaseLayer {
 
 	// 브로드 캐스트일 경우, type이 0xff
 	public boolean Send(byte[] input, int length) {
-		m_sHeader.enet_type[0] = (byte) 0x20;
-		m_sHeader.enet_type[1] = (byte) 0x80;
-		/*
-		과제#4
-		위에서 지정해준 type을 담은 헤더를 붙여서 하위계층으로 send시키는 과제
-		*/
+		m_sHeader.enet_type[0] = (byte) 0x08;
+		m_sHeader.enet_type[1] = (byte) 0x06;
+		
+		int op = byte2ToInt(input[6], input[7]);
+		
+		byte[] srcMac = new byte[6];
+		for(int i = 0; i < 6; i++) {
+			srcMac[i] = input[i+8];
+		}
+		SetEnetSrcAddress(srcMac);
+		
+		// arp request
+		if(op == 1) {
+			byte[] dstMac = new byte[] {-1, -1, -1, -1, -1, -1};
+			SetEnetDstAddress(dstMac);
+		}
+		// arp reply
+		else if(op == 2) {
+			byte[] dstMac = new byte[6];
+			for(int i = 0; i < 6; i++) {
+				dstMac[i] = input[i+18];
+			}
+			SetEnetDstAddress(dstMac);
+		}
+		
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
 		this.GetUnderLayer().Send(bytes, length + 14);
 		return true;
@@ -90,17 +109,17 @@ public class EthernetLayer implements BaseLayer {
 		
 		
 		if((!isMyPacket(input)) || (isBroadcast(input)) || (chkAddr(input))) {
-			if(temp_type == (byte)0x2080){
+			if(temp_type == 0x0806){
+				// arp Layer로 전송
 				data = RemoveEthernetHeader(input, input.length);
-				((ChatAppLayer)this.GetUpperLayer(0)).Receive(data);
-				
+				((ARPLayer)this.GetUpperLayer(0)).Receive(data);
 				return true;
 			}
-			else if(temp_type == (byte)0x2090){
-				data = RemoveEthernetHeader(input, input.length);
-				((FileAppLayer)this.GetUpperLayer(1)).Receive(data);
-				return true;
-			}
+//			else if(temp_type == (byte)0x2090){
+//				data = RemoveEthernetHeader(input, input.length);
+//				((FileAppLayer)this.GetUpperLayer(1)).Receive(data);
+//				return true;
+//			}
 		}
 		return false;
 	}

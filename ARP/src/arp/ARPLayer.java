@@ -14,8 +14,15 @@ public class ARPLayer implements BaseLayer{
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
 	ARPHeader m_sHeader = new ARPHeader();
 	
+	// 캐시테이블 업데이트를 위한 레이어 설정
+	public static ArpAppLayer appLayer;
+	public void setArpAppLayer(ArpAppLayer Layer) {
+		appLayer = Layer;
+	}
+	
 	// ARP Cache Table 생성
 	public static ArrayList<ARPCache> cache_table = new ArrayList<ARPCache>();
+	public static ArrayList<Proxy> proxyEntry = new ArrayList<Proxy>();
 	
 	public ARPLayer(String pName) {
 		pLayerName = pName;
@@ -120,6 +127,9 @@ public class ARPLayer implements BaseLayer{
 			byte[] tempMac = new byte[6];
 			ARPCache arpcache = new ARPCache(m_sHeader.dstIp, tempMac, false);
 			addCacheTable(arpcache);
+			
+			// AppLayer에서 캐시테이블 업데이트
+			updateCacheTable();
 		}
 		
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
@@ -155,6 +165,9 @@ public class ARPLayer implements BaseLayer{
 				}
 			}
 			
+			// AppLayer에서 캐시테이블 업데이트
+			updateCacheTable();
+			
 			//나에게 온 것이라면 src, dst를 스왑하고 op를 0x02로 바꾼 후 재전송
 			if(dstIp.equals(m_sHeader.srcIp)) {
 				// 브로드캐스트가 아닌 특정 목적지로 가야함
@@ -165,6 +178,9 @@ public class ARPLayer implements BaseLayer{
 				GetUnderLayer().Send(input, input.length);
 			}
 			//Proxy ARP 테이블도 확인
+			/*
+			 * TODO 
+			 */
 		}
 		
 		//op가 0x02이면 arp reply
@@ -185,7 +201,8 @@ public class ARPLayer implements BaseLayer{
 				addCacheTable(addARP);
 			}
 			
-			// AppLayer에서 캐시테이블 업데이트 필요
+			// AppLayer에서 캐시테이블 업데이트
+			updateCacheTable();
 		}
 		
 		return true;
@@ -236,6 +253,18 @@ public class ARPLayer implements BaseLayer{
         pUULayer.SetUnderLayer(this);
     }
 
+    public byte[] src_dst_swap(byte[] input) {
+    	byte[] src = new byte[10];
+    	byte[] dst = new byte[10];
+    	
+    	System.arraycopy(input, 8, src, 0, 10);
+    	System.arraycopy(input, 14, dst, 0, 10);
+
+    	System.arraycopy(dst, 0, input, 8, 10);
+    	System.arraycopy(src, 0, input, 18, 10);
+    	
+    	return input;
+    }
     
     public class ARPCache{
     	// ip주소, mac주소, status
@@ -250,26 +279,15 @@ public class ARPLayer implements BaseLayer{
     	}
     }
     
-    public byte[] src_dst_swap(byte[] input) {
-    	byte[] src = new byte[10];
-    	byte[] dst = new byte[10];
-    	
-    	System.arraycopy(input, 8, src, 0, 10);
-    	System.arraycopy(input, 14, dst, 0, 10);
-
-    	System.arraycopy(dst, 0, input, 8, 10);
-    	System.arraycopy(src, 0, input, 18, 10);
-    	
-    	return input;
-    }
-    
     public void addCacheTable(ARPCache cache) {
     	cache_table.add(cache);
+    	updateCacheTable();
     }
-    public void removeAll() {
+    public void cacheRemoveAll() {
         cache_table.clear();
+        updateCacheTable();
     }
-    public void remove(byte[] ip) {
+    public void cacheRemove(byte[] ip) {
     	Iterator<ARPCache> iter = cache_table.iterator();
     	
     	while(iter.hasNext()) {
@@ -278,6 +296,7 @@ public class ARPLayer implements BaseLayer{
     			iter.remove();
     		}
     	}
+    	updateCacheTable();
     }
     public ARPCache getCache(byte[] ip) {
     	Iterator<ARPCache> iter = cache_table.iterator();
@@ -290,4 +309,52 @@ public class ARPLayer implements BaseLayer{
     	return null;
     }
     
+    
+    public class Proxy{
+    	public byte[] ip = new byte[4];
+    	public byte[] mac = new byte[6];
+    	
+    	public Proxy(byte[] ip, byte[] mac) {
+    		this.ip = ip;
+    		this.mac = mac;
+    	}
+    }
+    
+    public Proxy getProxy(byte[] ip) {
+    	Iterator<Proxy> iter = proxyEntry.iterator();
+    	while(iter.hasNext()) {
+    		Proxy proxy = iter.next();
+    		if(Arrays.equals(ip, proxy.ip)) {
+    			return proxy;
+    		}
+    	}
+    	return null;
+    }
+    
+    public void proxyRemove(byte[] ip) {
+    	Iterator<Proxy> iter = proxyEntry.iterator();
+    	
+    	while(iter.hasNext()) {
+    		Proxy proxy = iter.next();
+    		if(Arrays.equals(ip, proxy.ip)) {
+    			iter.remove();
+    		}
+    	}
+    	updateProxyEntry();
+    }
+    
+    public void addProxy(byte[] ip, byte[] mac) {
+    	Proxy proxy = new Proxy(ip, mac);
+    	proxyEntry.add(proxy);
+    	updateProxyEntry();
+    }
+    
+    
+    public void updateCacheTable() {
+    	appLayer.updateARPCacheTable(cache_table);
+    }
+    
+    public void updateProxyEntry() {
+    	appLayer.updateProxyEntry(proxyEntry);
+    }
 }

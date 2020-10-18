@@ -29,11 +29,9 @@ public class NILayer implements BaseLayer {
 		} catch (UnsatisfiedLinkError e) {
 			System.out.println("Native code library failed to load. \n" + e);
 			System.exit(0);
-
 		}
-
 	}
-
+	
 	public NILayer(String pName) {
 		// super(pName);
 		pLayerName = pName;
@@ -60,12 +58,11 @@ public class NILayer implements BaseLayer {
 	}
 
 	public void SetAdapterList() {
-		// ���� ��ǻ�Ϳ� �����ϴ� ��� ��Ʈ��ũ ��� ��� ��������
 		int r = Pcap.findAllDevs(m_pAdapterList, errbuf);
 		System.out.println("I/F 갯수: "+m_pAdapterList.size());
-		// ��Ʈ��ũ ��Ͱ� �ϳ��� �������� ���� ��� ���� ó��
-		if (r == Pcap.NOT_OK || m_pAdapterList.isEmpty())
-			System.out.println("[Error] ��Ʈ��ũ ����͸� ���� ���Ͽ����ϴ�. Error : " + errbuf.toString());
+		
+		if(r == Pcap.NOT_OK || m_pAdapterList.isEmpty())
+			System.out.println("[Error] 네트워크 장치를 찾을 수 없습니다. Error : " + errbuf.toString());
 	}
 
 	public ArrayList<PcapIf> getAdapterList() {
