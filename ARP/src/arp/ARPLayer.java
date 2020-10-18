@@ -115,11 +115,12 @@ public class ARPLayer implements BaseLayer{
 		m_sHeader.op[1] = (byte)0x01;
 		
 		//ARP Cache List에 상대방 ip를 추가, mac은 0x00000000로, status는 false로 표시
-		byte[] tempMac = new byte[6];
-		ARPCache arpcache = new ARPCache(m_sHeader.dstIp, tempMac, false);
 		//cache 테이블에 추가
-		cache_table.add(arpcache);
-		
+		if(getCache(m_sHeader.dstIp) == null) {
+			byte[] tempMac = new byte[6];
+			ARPCache arpcache = new ARPCache(m_sHeader.dstIp, tempMac, false);
+			addCacheTable(arpcache);
+		}
 		
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
 		GetUnderLayer().Send(bytes, bytes.length);
@@ -137,26 +138,54 @@ public class ARPLayer implements BaseLayer{
 			byte[] srcMac = new byte[6];
 			byte[] dstIp = new byte[4];
 			
-			System.arraycopy(input, 8, srcIp, 0, 6);
-			System.arraycopy(input, 14, srcMac, 0, 4);
+			System.arraycopy(input, 8, srcMac, 0, 6);
+			System.arraycopy(input, 14, srcIp, 0, 4);
 			System.arraycopy(input, 24, dstIp, 0, 4);
 			
 			//ARP Cache List에 상대방 ip와 mac을 추가
-			/*###############
-			 * TODO
-			 ################*/
-			
-			
-			//Proxy ARP 테이블도 확인
-			
-			if(dstIp.equals(m_sHeader.dstIp)) {
-				
+			ARPCache tempARP = getCache(srcIp);
+			if(tempARP == null) {
+				ARPCache arpCache = new ARPCache(srcIp, srcMac, true);
+				addCacheTable(arpCache);
 			}
+			else {
+				if(tempARP.status == false) {
+					tempARP.status = true;
+					tempARP.mac = srcMac;
+				}
+			}
+			
+			//나에게 온 것이라면 src, dst를 스왑하고 op를 0x02로 바꾼 후 재전송
+			if(dstIp.equals(m_sHeader.srcIp)) {
+				// 브로드캐스트가 아닌 특정 목적지로 가야함
+				System.arraycopy(input, 15, m_sHeader.srcMac, 0, 6);
+				input[7] = (byte)0x02;
+				src_dst_swap(input);
+				
+				GetUnderLayer().Send(input, input.length);
+			}
+			//Proxy ARP 테이블도 확인
 		}
 		
 		//op가 0x02이면 arp reply
 		if(input[7] == 0x02) {
+			byte[] srcIp = new byte[4];
+			byte[] srcMac = new byte[6];
 			
+			System.arraycopy(input, 8, srcMac, 0, 6);
+			System.arraycopy(input, 14, srcIp, 0, 4);
+			
+			ARPCache tempARP = getCache(srcIp);
+			if(tempARP != null) {
+				tempARP.status = true;
+				tempARP.mac = srcMac;
+			}
+			else if(tempARP == null) {
+				ARPCache addARP = new ARPCache(srcIp, srcMac, true);
+				addCacheTable(addARP);
+			}
+			
+			// AppLayer에서 캐시테이블 업데이트 필요
 		}
 		
 		return true;
@@ -234,7 +263,7 @@ public class ARPLayer implements BaseLayer{
     	return input;
     }
     
-    public void addARPCache(ARPCache cache) {
+    public void addCacheTable(ARPCache cache) {
     	cache_table.add(cache);
     }
     public void removeAll() {
