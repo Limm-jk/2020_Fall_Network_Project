@@ -169,18 +169,31 @@ public class ARPLayer implements BaseLayer{
 			updateCacheTable();
 			
 			//나에게 온 것이라면 src, dst를 스왑하고 op를 0x02로 바꾼 후 재전송
-			if(dstIp.equals(m_sHeader.srcIp)) {
+			if(Arrays.equals(dstIp, m_sHeader.srcIp)) {
 				// 브로드캐스트가 아닌 특정 목적지로 가야함
-				System.arraycopy(input, 15, m_sHeader.srcMac, 0, 6);
+				//System.arraycopy(input, 15, m_sHeader.srcMac, 0, 6);
 				input[7] = (byte)0x02;
 				src_dst_swap(input);
 				
 				GetUnderLayer().Send(input, input.length);
 			}
 			//Proxy ARP 테이블도 확인
-			/*
-			 * TODO 
-			 */
+			else {
+				Iterator<Proxy> iter = proxyEntry.iterator();
+		    	
+		    	while(iter.hasNext()) {
+		    		Proxy proxy = iter.next();
+		    		if(Arrays.equals(dstIp, proxy.ip)) {
+		    			//System.arraycopy(input, 15, m_sHeader.srcMac, 0, 6);
+						input[7] = (byte)0x02;
+						src_dst_swap(input);
+						
+						GetUnderLayer().Send(input, input.length);
+						break;
+		    		}
+		    	}
+		    	updateProxyEntry();
+			}
 		}
 		
 		//op가 0x02이면 arp reply

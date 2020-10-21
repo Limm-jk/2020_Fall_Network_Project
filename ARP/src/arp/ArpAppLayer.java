@@ -83,6 +83,9 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		ipLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
 		arpLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
 		arpLayer.setSrcMac(niLayer.GetAdapterObject(adapterNumber).getHardwareAddress());
+		
+		niLayer.SetAdapterNumber(0);
+		niLayer.Receive();
 	}
 	
 	
@@ -291,6 +294,9 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					
 					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 					arpLayer.setDstIp(dstIP);
+					
+//					NILayer niLayer = (NILayer)m_LayerMgr.GetLayer("NI");
+//					niLayer.SetAdapterNumber(0);
 					
 					arpLayer.Send(new byte[0], 0);
 					
