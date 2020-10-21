@@ -49,7 +49,7 @@ public class EthernetLayer implements BaseLayer {
         }
     }
     
-    public byte[] ObjToByte(_ETHERNET_Frame Header, byte[] input, int length) {//data에 헤더 붙여주기
+    public byte[] ObjToByte(_ETHERNET_Frame Header, byte[] input, int length) {//data�뿉 �뿤�뜑 遺숈뿬二쇨린
 		byte[] buf = new byte[length + 14];
 		for(int i = 0; i < 6; i++) {
 			buf[i] = Header.enet_dstaddr.addr[i];
@@ -63,7 +63,7 @@ public class EthernetLayer implements BaseLayer {
 		return buf;
 	}
 
-	// 브로드 캐스트일 경우, type이 0xff
+	// 釉뚮줈�뱶 罹먯뒪�듃�씪 寃쎌슦, type�씠 0xff
 	public boolean Send(byte[] input, int length) {
 		m_sHeader.enet_type[0] = (byte) 0x08;
 		m_sHeader.enet_type[1] = (byte) 0x06;
@@ -107,10 +107,13 @@ public class EthernetLayer implements BaseLayer {
 		byte[] temp_src = m_sHeader.enet_srcaddr.addr;
 		int temp_type = byte2ToInt(input[12], input[13]); 
 		
+		byte[] temp_dst = new byte[6];
+		System.arraycopy(input, 0, temp_dst, 0, 6);
+		System.out.println(macByteToString(temp_dst));
 		
-		if((!isMyPacket(input)) || (isBroadcast(input)) || (chkAddr(input))) {
+		if(!(isMyPacket(input)) && ((isBroadcast(input)) || (chkAddr(input)))) {
 			if(temp_type == 0x0806){
-				// arp Layer로 전송
+				// arp Layer濡� �쟾�넚
 				data = RemoveEthernetHeader(input, input.length);
 				((ARPLayer)this.GetUpperLayer(0)).Receive(data);
 				return true;
@@ -121,7 +124,22 @@ public class EthernetLayer implements BaseLayer {
 //				return true;
 //			}
 		}
+		
 		return false;
+	}
+	
+	public String macByteToString(byte[] byte_MacAddress) { //MAC Byte雅뚯눘�꺖�몴占� String占쎌몵嚥∽옙 癰귨옙占쎌넎
+		String MacAddress = "";
+		for (int i = 0; i < 6; i++) { 
+			//2占쎌쁽�뵳占� 16筌욊쑴�땾�몴占� 占쏙옙�눧紐꾩쁽嚥∽옙, 域밸챶�봺�⑨옙 1占쎌쁽�뵳占� 16筌욊쑴�땾占쎈뮉 占쎈링占쎈퓠 0占쎌뱽 �겫�늿�뿫.
+			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
+			
+			if (i != 5) {
+				//2占쎌쁽�뵳占� 16筌욊쑴�땾 占쎌쁽�뵳占� 占쎈뼊占쎌맄 占쎈츟占쎈퓠 "-"�겫�늿肉т틠�눊由�
+				MacAddress += ":";
+			}
+		}
+		return MacAddress;
 	}
 
     private byte[] intToByte2(int value) {
@@ -140,12 +158,12 @@ public class EthernetLayer implements BaseLayer {
 		for(int i = 0; i< 6; i++)
 			if (bytes[i] != (byte) 0xff)
 				return false;
-		return (bytes[12] == (byte) 0xff && bytes[13] == (byte) 0xff);
+		return true;
 	}
 
 	private boolean isMyPacket(byte[] input){
 		for(int i = 0; i < 6; i++)
-			if(m_sHeader.enet_srcaddr.addr[i] != input[6 + i])
+			if(m_sHeader.enet_srcaddr.addr[i] != input[6+i])
 				return false;
 		return true;
 	}
@@ -217,8 +235,8 @@ public class EthernetLayer implements BaseLayer {
 		m_sHeader.enet_type[0] = (byte) 0x20;
 		m_sHeader.enet_type[1] = (byte) 0x90;
 		/*
-		과제#4
-		위에서 지정해준 type을 담은 헤더를 붙여서 하위계층으로 send시키는 과제
+		怨쇱젣#4
+		�쐞�뿉�꽌 吏��젙�빐以� type�쓣 �떞�� �뿤�뜑瑜� 遺숈뿬�꽌 �븯�쐞怨꾩링�쑝濡� send�떆�궎�뒗 怨쇱젣
 		*/
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
 		this.GetUnderLayer().Send(bytes, length + 14);

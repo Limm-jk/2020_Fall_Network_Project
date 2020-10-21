@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-// ARP �닔�뻾
+// ARP 占쎈땾占쎈뻬
 
 public class ARPLayer implements BaseLayer{
 	public int nUpperLayerCount = 0;
@@ -14,13 +14,13 @@ public class ARPLayer implements BaseLayer{
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
 	ARPHeader m_sHeader = new ARPHeader();
 	
-	// 罹먯떆�뀒�씠釉� �뾽�뜲�씠�듃瑜� �쐞�븳 �젅�씠�뼱 �꽕�젙
+	// 筌�癒��뻻占쎈�믭옙�뵠�뇡占� 占쎈씜占쎈쑓占쎌뵠占쎈뱜�몴占� 占쎌맄占쎈립 占쎌쟿占쎌뵠占쎈선 占쎄퐬占쎌젟
 	public static ArpAppLayer appLayer;
 	public void setArpAppLayer(ArpAppLayer Layer) {
 		appLayer = Layer;
 	}
 	
-	// ARP Cache Table �깮�꽦
+	// ARP Cache Table 占쎄문占쎄쉐
 	public static ArrayList<ARPCache> cache_table = new ArrayList<ARPCache>();
 	public static ArrayList<Proxy> proxyEntry = new ArrayList<Proxy>();
 	
@@ -28,7 +28,7 @@ public class ARPLayer implements BaseLayer{
 		pLayerName = pName;
 	}
 	
-	//arp �뿤�뜑
+	//arp 占쎈엘占쎈쐭
 	private static class ARPHeader{
 		byte[] hardType = new byte[2];
 		byte[] protType = new byte[2];
@@ -64,7 +64,7 @@ public class ARPLayer implements BaseLayer{
 		}
 	}
 	
-	//arp header�뿉 ip�� mac二쇱냼 �꽭�똿
+	//arp header占쎈퓠 ip占쏙옙 mac雅뚯눘�꺖 占쎄쉭占쎈샒
 	public void setSrcIp(byte[] ip) {
 		m_sHeader.srcIp = ip;
 	}
@@ -78,9 +78,9 @@ public class ARPLayer implements BaseLayer{
 		m_sHeader.dstMac = mac;
 	}
 	
-	//�뜲�씠�꽣�뿉 header 遺숈씠湲�
+	//占쎈쑓占쎌뵠占쎄숲占쎈퓠 header �겫�늿�뵠疫뀐옙
 	public byte[] ObjToByte(ARPHeader Header, byte[] input, int length) {
-		//28byte�쓽 arp�뿤�뜑 遺숈씠湲�
+		//28byte占쎌벥 arp占쎈엘占쎈쐭 �겫�늿�뵠疫뀐옙
 		byte[] buf = new byte[length+28];
 		
 		for(int i = 0; i < 28; i++) {
@@ -121,14 +121,14 @@ public class ARPLayer implements BaseLayer{
 		m_sHeader.op[0] = (byte)0x00;
 		m_sHeader.op[1] = (byte)0x01;
 		
-		//ARP Cache List�뿉 �긽��諛� ip瑜� 異붽�, mac�� 0x00000000濡�, status�뒗 false濡� �몴�떆
-		//cache �뀒�씠釉붿뿉 異붽�
-		if(getCache(m_sHeader.dstIp) == null) {
+		//ARP Cache List占쎈퓠 占쎄맒占쏙옙獄쏉옙 ip�몴占� �빊遺쏙옙, mac占쏙옙 0x00000000嚥∽옙, status占쎈뮉 false嚥∽옙 占쎈ご占쎈뻻
+		//cache 占쎈�믭옙�뵠�뇡遺용퓠 �빊遺쏙옙
+		if(getCache(m_sHeader.dstIp) == null && !Arrays.equals(m_sHeader.srcIp, m_sHeader.dstIp)) {
 			byte[] tempMac = new byte[6];
 			ARPCache arpcache = new ARPCache(m_sHeader.dstIp, tempMac, false);
 			addCacheTable(arpcache);
 			
-			// AppLayer�뿉�꽌 罹먯떆�뀒�씠釉� �뾽�뜲�씠�듃
+			// AppLayer占쎈퓠占쎄퐣 筌�癒��뻻占쎈�믭옙�뵠�뇡占� 占쎈씜占쎈쑓占쎌뵠占쎈뱜
 			updateCacheTable();
 		}
 		
@@ -139,11 +139,11 @@ public class ARPLayer implements BaseLayer{
 	
 	//receive
 	public boolean Receive(byte[] input) {
-		//input[7]�� op肄붾뱶�쓽 �뮮 �옄由�
+		//input[7]占쏙옙 op�굜遺얜굡占쎌벥 占쎈�� 占쎌쁽�뵳占�
 		
-		//op媛� 0x01�씠硫� arp request
+		//op揶쏉옙 0x01占쎌뵠筌롳옙 arp request
 		if(input[7] == 0x01) {
-			//srcIp, srcMac�� 蹂대궦�궗�엺�쓽 Ip�� Mac, dstIp�뒗 諛쏆��궗�엺�쓽 Ip
+			//srcIp, srcMac占쏙옙 癰귣�沅�占쎄텢占쎌뿺占쎌벥 Ip占쏙옙 Mac, dstIp占쎈뮉 獄쏆룇占쏙옙沅쀯옙�뿺占쎌벥 Ip
 			byte[] srcIp = new byte[4];
 			byte[] srcMac = new byte[6];
 			byte[] dstIp = new byte[4];
@@ -151,6 +151,10 @@ public class ARPLayer implements BaseLayer{
 			System.arraycopy(input, 8, srcMac, 0, 6);
 			System.arraycopy(input, 14, srcIp, 0, 4);
 			System.arraycopy(input, 24, dstIp, 0, 4);
+			
+			if(Arrays.equals(srcIp, m_sHeader.srcIp)) {
+				return false;
+			}
 			
 			ARPCache tempARP = getCache(srcIp);
 			if(tempARP == null) {
@@ -162,12 +166,15 @@ public class ARPLayer implements BaseLayer{
 					tempARP.status = true;
 					tempARP.mac = srcMac;
 				}
+				else if(!Arrays.equals(tempARP.mac, srcMac)) {
+					tempARP.mac = srcMac;
+				}
 			}
 			updateCacheTable();
 
-			//�굹�뿉寃� �삩 寃껋씠�씪硫� src, dst瑜� �뒪�솑�븯怨� op瑜� 0x02濡� 諛붽씔 �썑 �옱�쟾�넚
+			//占쎄돌占쎈퓠野껓옙 占쎌궔 野껉퍔�뵠占쎌뵬筌롳옙 src, dst�몴占� 占쎈뮞占쎌넁占쎈릭�⑨옙 op�몴占� 0x02嚥∽옙 獄쏅떽�뵒 占쎌뜎 占쎌삺占쎌읈占쎈꽊
 			if(Arrays.equals(dstIp, m_sHeader.srcIp)) {
-				// 釉뚮줈�뱶罹먯뒪�듃媛� �븘�땶 �듅�젙 紐⑹쟻吏�濡� 媛��빞�븿
+				// �뇡�슢以덌옙諭띰㏄癒��뮞占쎈뱜揶쏉옙 占쎈툡占쎈빒 占쎈뱟占쎌젟 筌뤴뫗�읅筌욑옙嚥∽옙 揶쏉옙占쎈튊占쎈맙
 				//System.arraycopy(input, 15, m_sHeader.srcMac, 0, 6);
 				input[7] = (byte)0x02;
 				src_dst_swap(input);
@@ -176,7 +183,7 @@ public class ARPLayer implements BaseLayer{
 						
 				GetUnderLayer().Send(input, input.length);
 			}
-			//Proxy ARP �뀒�씠釉붾룄 �솗�씤
+			//Proxy ARP 占쎈�믭옙�뵠�뇡遺얜즲 占쎌넇占쎌뵥
 			else {
 				Iterator<Proxy> iter = proxyEntry.iterator();
 				
@@ -197,13 +204,17 @@ public class ARPLayer implements BaseLayer{
 			}
 		}
 		
-		//op媛� 0x02�씠硫� arp reply
+		//op揶쏉옙 0x02占쎌뵠筌롳옙 arp reply
 		else if(input[7] == 0x02) {
 			byte[] srcIp = new byte[4];
 			byte[] srcMac = new byte[6];
 			
 			System.arraycopy(input, 8, srcMac, 0, 6);
 			System.arraycopy(input, 14, srcIp, 0, 4);
+			
+			if(Arrays.equals(srcIp, m_sHeader.srcIp)) {
+				return false;
+			}
 			
 			ARPCache tempARP = getCache(srcIp);
 			if(tempARP != null) {
@@ -215,7 +226,7 @@ public class ARPLayer implements BaseLayer{
 				addCacheTable(addARP);
 			}
 			
-			// AppLayer�뿉�꽌 罹먯떆�뀒�씠釉� �뾽�뜲�씠�듃
+			// AppLayer占쎈퓠占쎄퐣 筌�癒��뻻占쎈�믭옙�뵠�뇡占� 占쎈씜占쎈쑓占쎌뵠占쎈뱜
 			updateCacheTable();
 		}
 		
@@ -281,7 +292,7 @@ public class ARPLayer implements BaseLayer{
     }
     
     public class ARPCache{
-    	// ip二쇱냼, mac二쇱냼, status
+    	// ip雅뚯눘�꺖, mac雅뚯눘�꺖, status
     	public byte[] ip = new byte[4];
     	public byte[] mac = new byte[6];
     	public boolean status;
