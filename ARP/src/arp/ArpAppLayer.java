@@ -84,6 +84,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		arpLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
 		arpLayer.setSrcMac(niLayer.GetAdapterObject(adapterNumber).getHardwareAddress());
 		
+		//NILayer niLayer = (NILayer)m_LayerMgr.GetLayer("NI");
 		niLayer.SetAdapterNumber(0);
 		niLayer.Receive();
 	}
@@ -113,8 +114,8 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		ARPTable.setBounds(12, 20, 412, 206);
 		ARPPanel.add(ARPTable);
 		
-		JLabel lblNewLabel = new JLabel("IP주소");
-		lblNewLabel.setFont(new Font("돋움", Font.BOLD, 14));
+		JLabel lblNewLabel = new JLabel("IP二쇱냼");
+		lblNewLabel.setFont(new Font("�룍��", Font.BOLD, 14));
 		lblNewLabel.setBounds(16, 295, 52, 36);
 		ARPPanel.add(lblNewLabel);
 		
@@ -169,8 +170,8 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		contentPane.add(GARPPanel);
 		GARPPanel.setLayout(null);
 		
-		JLabel lblNewLabel_1 = new JLabel("H/W 주소");
-		lblNewLabel_1.setFont(new Font("돋움", Font.BOLD, 16));
+		JLabel lblNewLabel_1 = new JLabel("H/W 二쇱냼");
+		lblNewLabel_1.setFont(new Font("�룍��", Font.BOLD, 16));
 		lblNewLabel_1.setBounds(12, 41, 74, 36);
 		GARPPanel.add(lblNewLabel_1);
 		
@@ -185,8 +186,8 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		GARPPanel.add(GARPSend);
 		
 		
-		/*-----종료, 취소-----*/
-		JButton btnEnd = new JButton("종료");
+		/*-----醫낅즺, 痍⑥냼-----*/
+		JButton btnEnd = new JButton("醫낅즺");
 		btnEnd.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setVisible(false);
@@ -195,7 +196,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		btnEnd.setBounds(334, 396, 114, 42);
 		contentPane.add(btnEnd);
 		
-		JButton btnCancel = new JButton("취소");
+		JButton btnCancel = new JButton("痍⑥냼");
 		btnCancel.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setVisible(false);
@@ -209,7 +210,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 	
 	class proxyWindow extends JFrame{
 		public proxyWindow() {
-			setTitle("Proxy ARP Entry 추가");
+			setTitle("Proxy ARP Entry 異붽�");
 			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			setBounds(100, 100, 492, 295);
 			contentPane = new JPanel();
@@ -217,13 +218,13 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 			setContentPane(contentPane);
 			contentPane.setLayout(null);
 			
-			JLabel ProxyEntryIPLabel = new JLabel("IP 주소");
-			ProxyEntryIPLabel.setFont(new Font("돋움", Font.BOLD, 20));
+			JLabel ProxyEntryIPLabel = new JLabel("IP 二쇱냼");
+			ProxyEntryIPLabel.setFont(new Font("�룍��", Font.BOLD, 20));
 			ProxyEntryIPLabel.setBounds(86, 64, 74, 34);
 			contentPane.add(ProxyEntryIPLabel);
 			
-			JLabel proxyEntryEthernetLabel = new JLabel("Ethernet 주소");
-			proxyEntryEthernetLabel.setFont(new Font("돋움", Font.BOLD, 20));
+			JLabel proxyEntryEthernetLabel = new JLabel("Ethernet 二쇱냼");
+			proxyEntryEthernetLabel.setFont(new Font("�룍��", Font.BOLD, 20));
 			proxyEntryEthernetLabel.setBounds(31, 112, 129, 34);
 			contentPane.add(proxyEntryEthernetLabel);
 			
@@ -243,7 +244,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 			proxyEntryAddBtn.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					//entry 추가
+					//entry 異붽�
 					String inputIp = proxyEntryIp.getText().trim();
 					String inputMac = proxyEntryMac.getText().trim();
 					
@@ -251,7 +252,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					try {
 						ip = InetAddress.getByName(inputIp);
 					} catch (UnknownHostException e1) {
-						// TODO 자동 생성된 catch 블록
+						// TODO �옄�룞 �깮�꽦�맂 catch 釉붾줉
 						e1.printStackTrace();
 					}
 					byte[] byteIp = ip.getAddress();
@@ -284,7 +285,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 		public void actionPerformed(ActionEvent e) {
 			/*----ARP Action-----*/
 			if(e.getSource() == ARP_IPSend) {
-				//IP 입력 후 send버튼 눌렀을 때
+				//IP �엯�젰 �썑 send踰꾪듉 �닃���쓣 �븣
 				String inputIP = IPTextField.getText().trim();
 				
 				InetAddress ip = null;
@@ -294,9 +295,6 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					
 					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 					arpLayer.setDstIp(dstIP);
-					
-//					NILayer niLayer = (NILayer)m_LayerMgr.GetLayer("NI");
-//					niLayer.SetAdapterNumber(0);
 					
 					arpLayer.Send(new byte[0], 0);
 					
@@ -308,7 +306,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 			}
 			
 			else if(e.getSource() == ARPItemDelete) {
-				//ItemDelete 버튼을 눌렀을 때
+				//ItemDelete 踰꾪듉�쓣 �닃���쓣 �븣
 				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 				int selectRow = ARPTable.getSelectedRow();
 				if(selectRow == -1) {
@@ -320,7 +318,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					try {
 						ip = InetAddress.getByName(ipAddress);
 					} catch (UnknownHostException e1) {
-						// TODO 자동 생성된 catch 블록
+						// TODO �옄�룞 �깮�꽦�맂 catch 釉붾줉
 						e1.printStackTrace();
 					}
 					byte[] byteIp = ip.getAddress();
@@ -329,19 +327,19 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 			}
 			
 			else if(e.getSource() == ARPAllDelete) {
-				//AllDelete 버튼을 눌렀을 때
+				//AllDelete 踰꾪듉�쓣 �닃���쓣 �븣
 				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 				arpLayer.cacheRemoveAll();
 			}
 			
 			/*----- Proxy Action -----*/
 			else if(e.getSource() == ProxyAdd) {
-				//Add 버튼을 눌렀을 때
+				//Add 踰꾪듉�쓣 �닃���쓣 �븣
 				new proxyWindow();
 			}
 			
 			else if(e.getSource() == ProxyDelete) {
-				//Delete 버튼을 눌렀을 때
+				//Delete 踰꾪듉�쓣 �닃���쓣 �븣
 				ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 				
 				int selectRow = ProxyTable.getSelectedRow();
@@ -354,7 +352,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					try {
 						ip = InetAddress.getByName(ipAddress);
 					} catch (UnknownHostException e1) {
-						// TODO 자동 생성된 catch 블록
+						// TODO �옄�룞 �깮�꽦�맂 catch 釉붾줉
 						e1.printStackTrace();
 					}
 					byte[] byteIp = ip.getAddress();
@@ -364,19 +362,19 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 			
 			/*----- GARP Action -----*/
 			else if(e.getSource() == GARPSend) {
-				//GARP Send버튼을 눌렀을 때
+				//GARP Send踰꾪듉�쓣 �닃���쓣 �븣
 			}
 		}
 	}
 	
-	public String macByteToString(byte[] byte_MacAddress) { //MAC Byte주소를 String으로 변환
+	public String macByteToString(byte[] byte_MacAddress) { //MAC Byte二쇱냼瑜� String�쑝濡� 蹂��솚
 		String MacAddress = "";
 		for (int i = 0; i < 6; i++) { 
-			//2자리 16진수를 대문자로, 그리고 1자리 16진수는 앞에 0을 붙임.
+			//2�옄由� 16吏꾩닔瑜� ��臾몄옄濡�, 洹몃━怨� 1�옄由� 16吏꾩닔�뒗 �븵�뿉 0�쓣 遺숈엫.
 			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
 			
 			if (i != 5) {
-				//2자리 16진수 자리 단위 뒤에 "-"붙여주기
+				//2�옄由� 16吏꾩닔 �옄由� �떒�쐞 �뮘�뿉 "-"遺숈뿬二쇨린
 				MacAddress += ":";
 			}
 		}
@@ -384,7 +382,7 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 	}
 
 	public byte[] macStringToByte(String mac) {
-		// string mac 주소는 "00:00:00:00:00:00" 형태
+		// string mac 二쇱냼�뒗 "00:00:00:00:00:00" �삎�깭
 		byte[] ret = new byte[6];
 
 		StringTokenizer tokens = new StringTokenizer(mac, ":");
@@ -414,19 +412,19 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 	}
 	
 	public void updateARPCacheTable(ArrayList<ARPCache> cache_table) {
-		// GUI에 cache table 업데이트
-		//ip주소를 string으로 변환 필요
-		//mac주소를 string으로 변환 필요
-		//ARPTable 변수 (JTable)의 row에 cache table 업데이터
+		// GUI�뿉 cache table �뾽�뜲�씠�듃
+		//ip二쇱냼瑜� string�쑝濡� 蹂��솚 �븘�슂
+		//mac二쇱냼瑜� string�쑝濡� 蹂��솚 �븘�슂
+		//ARPTable 蹂��닔 (JTable)�쓽 row�뿉 cache table �뾽�뜲�씠�꽣
 		
-		// 모든 행 삭제
+		// 紐⑤뱺 �뻾 �궘�젣
 		if (arpModel.getRowCount() > 0) {
 		    for (int i = arpModel.getRowCount() - 1; i > -1; i--) {
 		        arpModel.removeRow(i);
 		    }
 		}
 		
-		//cache_table의 모든 행 추가
+		//cache_table�쓽 紐⑤뱺 �뻾 異붽�
 		Iterator<ARPCache> iter = cache_table.iterator();
     	while(iter.hasNext()) {
     		ARPCache cache = iter.next();
@@ -447,8 +445,8 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 	}
 	
 	public void updateProxyEntry(ArrayList<Proxy> proxyEntry) {
-		// GUI에 proxy Entry 업데이트
-		// 모든 행 삭제
+		// GUI�뿉 proxy Entry �뾽�뜲�씠�듃
+		// 紐⑤뱺 �뻾 �궘�젣
 		if (proxyModel.getRowCount() > 0) {
 		    for (int i = proxyModel.getRowCount() - 1; i > -1; i--) {
 		        proxyModel.removeRow(i);

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-// ARP 수행
+// ARP �닔�뻾
 
 public class ARPLayer implements BaseLayer{
 	public int nUpperLayerCount = 0;
@@ -14,13 +14,13 @@ public class ARPLayer implements BaseLayer{
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
 	ARPHeader m_sHeader = new ARPHeader();
 	
-	// 캐시테이블 업데이트를 위한 레이어 설정
+	// 罹먯떆�뀒�씠釉� �뾽�뜲�씠�듃瑜� �쐞�븳 �젅�씠�뼱 �꽕�젙
 	public static ArpAppLayer appLayer;
 	public void setArpAppLayer(ArpAppLayer Layer) {
 		appLayer = Layer;
 	}
 	
-	// ARP Cache Table 생성
+	// ARP Cache Table �깮�꽦
 	public static ArrayList<ARPCache> cache_table = new ArrayList<ARPCache>();
 	public static ArrayList<Proxy> proxyEntry = new ArrayList<Proxy>();
 	
@@ -28,7 +28,7 @@ public class ARPLayer implements BaseLayer{
 		pLayerName = pName;
 	}
 	
-	//arp 헤더
+	//arp �뿤�뜑
 	private static class ARPHeader{
 		byte[] hardType = new byte[2];
 		byte[] protType = new byte[2];
@@ -64,7 +64,7 @@ public class ARPLayer implements BaseLayer{
 		}
 	}
 	
-	//arp header에 ip와 mac주소 세팅
+	//arp header�뿉 ip�� mac二쇱냼 �꽭�똿
 	public void setSrcIp(byte[] ip) {
 		m_sHeader.srcIp = ip;
 	}
@@ -78,9 +78,9 @@ public class ARPLayer implements BaseLayer{
 		m_sHeader.dstMac = mac;
 	}
 	
-	//데이터에 header 붙이기
+	//�뜲�씠�꽣�뿉 header 遺숈씠湲�
 	public byte[] ObjToByte(ARPHeader Header, byte[] input, int length) {
-		//28byte의 arp헤더 붙이기
+		//28byte�쓽 arp�뿤�뜑 遺숈씠湲�
 		byte[] buf = new byte[length+28];
 		
 		for(int i = 0; i < 28; i++) {
@@ -121,14 +121,14 @@ public class ARPLayer implements BaseLayer{
 		m_sHeader.op[0] = (byte)0x00;
 		m_sHeader.op[1] = (byte)0x01;
 		
-		//ARP Cache List에 상대방 ip를 추가, mac은 0x00000000로, status는 false로 표시
-		//cache 테이블에 추가
+		//ARP Cache List�뿉 �긽��諛� ip瑜� 異붽�, mac�� 0x00000000濡�, status�뒗 false濡� �몴�떆
+		//cache �뀒�씠釉붿뿉 異붽�
 		if(getCache(m_sHeader.dstIp) == null) {
 			byte[] tempMac = new byte[6];
 			ARPCache arpcache = new ARPCache(m_sHeader.dstIp, tempMac, false);
 			addCacheTable(arpcache);
 			
-			// AppLayer에서 캐시테이블 업데이트
+			// AppLayer�뿉�꽌 罹먯떆�뀒�씠釉� �뾽�뜲�씠�듃
 			updateCacheTable();
 		}
 		
@@ -139,11 +139,11 @@ public class ARPLayer implements BaseLayer{
 	
 	//receive
 	public boolean Receive(byte[] input) {
-		//input[7]은 op코드의 뒷 자리
+		//input[7]�� op肄붾뱶�쓽 �뮮 �옄由�
 		
-		//op가 0x01이면 arp request
+		//op媛� 0x01�씠硫� arp request
 		if(input[7] == 0x01) {
-			//srcIp, srcMac은 보낸사람의 Ip와 Mac, dstIp는 받은사람의 Ip
+			//srcIp, srcMac�� 蹂대궦�궗�엺�쓽 Ip�� Mac, dstIp�뒗 諛쏆��궗�엺�쓽 Ip
 			byte[] srcIp = new byte[4];
 			byte[] srcMac = new byte[6];
 			byte[] dstIp = new byte[4];
@@ -152,7 +152,6 @@ public class ARPLayer implements BaseLayer{
 			System.arraycopy(input, 14, srcIp, 0, 4);
 			System.arraycopy(input, 24, dstIp, 0, 4);
 			
-			//ARP Cache List에 상대방 ip와 mac을 추가
 			ARPCache tempARP = getCache(srcIp);
 			if(tempARP == null) {
 				ARPCache arpCache = new ARPCache(srcIp, srcMac, true);
@@ -164,40 +163,42 @@ public class ARPLayer implements BaseLayer{
 					tempARP.mac = srcMac;
 				}
 			}
-			
-			// AppLayer에서 캐시테이블 업데이트
 			updateCacheTable();
-			
-			//나에게 온 것이라면 src, dst를 스왑하고 op를 0x02로 바꾼 후 재전송
+
+			//�굹�뿉寃� �삩 寃껋씠�씪硫� src, dst瑜� �뒪�솑�븯怨� op瑜� 0x02濡� 諛붽씔 �썑 �옱�쟾�넚
 			if(Arrays.equals(dstIp, m_sHeader.srcIp)) {
-				// 브로드캐스트가 아닌 특정 목적지로 가야함
+				// 釉뚮줈�뱶罹먯뒪�듃媛� �븘�땶 �듅�젙 紐⑹쟻吏�濡� 媛��빞�븿
 				//System.arraycopy(input, 15, m_sHeader.srcMac, 0, 6);
 				input[7] = (byte)0x02;
 				src_dst_swap(input);
-				
+				System.arraycopy(m_sHeader.srcMac, 0, input, 8, 6);
+				System.arraycopy(m_sHeader.srcIp, 0, input, 14, 4);		
+						
 				GetUnderLayer().Send(input, input.length);
 			}
-			//Proxy ARP 테이블도 확인
+			//Proxy ARP �뀒�씠釉붾룄 �솗�씤
 			else {
 				Iterator<Proxy> iter = proxyEntry.iterator();
-		    	
-		    	while(iter.hasNext()) {
-		    		Proxy proxy = iter.next();
-		    		if(Arrays.equals(dstIp, proxy.ip)) {
-		    			//System.arraycopy(input, 15, m_sHeader.srcMac, 0, 6);
+				
+				while(iter.hasNext()) {
+					Proxy proxy = iter.next();
+					if(Arrays.equals(dstIp,  proxy.ip)) {
+						
+						//System.arraycopy(input,  15,  m_sHeader.srcMac,  0, 6);
 						input[7] = (byte)0x02;
 						src_dst_swap(input);
+						System.arraycopy(m_sHeader.srcMac, 0, input, 8, 6);	
 						
 						GetUnderLayer().Send(input, input.length);
 						break;
-		    		}
-		    	}
-		    	updateProxyEntry();
+					}
+				}
+				updateProxyEntry();
 			}
 		}
 		
-		//op가 0x02이면 arp reply
-		if(input[7] == 0x02) {
+		//op媛� 0x02�씠硫� arp reply
+		else if(input[7] == 0x02) {
 			byte[] srcIp = new byte[4];
 			byte[] srcMac = new byte[6];
 			
@@ -214,7 +215,7 @@ public class ARPLayer implements BaseLayer{
 				addCacheTable(addARP);
 			}
 			
-			// AppLayer에서 캐시테이블 업데이트
+			// AppLayer�뿉�꽌 罹먯떆�뀒�씠釉� �뾽�뜲�씠�듃
 			updateCacheTable();
 		}
 		
@@ -271,7 +272,7 @@ public class ARPLayer implements BaseLayer{
     	byte[] dst = new byte[10];
     	
     	System.arraycopy(input, 8, src, 0, 10);
-    	System.arraycopy(input, 14, dst, 0, 10);
+    	System.arraycopy(input, 18, dst, 0, 10);
 
     	System.arraycopy(dst, 0, input, 8, 10);
     	System.arraycopy(src, 0, input, 18, 10);
@@ -280,7 +281,7 @@ public class ARPLayer implements BaseLayer{
     }
     
     public class ARPCache{
-    	// ip주소, mac주소, status
+    	// ip二쇱냼, mac二쇱냼, status
     	public byte[] ip = new byte[4];
     	public byte[] mac = new byte[6];
     	public boolean status;
