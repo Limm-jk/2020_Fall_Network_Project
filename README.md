@@ -9,7 +9,7 @@ IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
     - 그러므로 논리적 주소(IP)를 알고 있을 때, 대응되는 물리적 주소(MAC)를 알아오는 과정 필요  
     - 논리적인 IP주소와 물리적인 MAC주소의 대응을 위해 ARP를 사용   
   - Proxy ARP
-    - 모르겠장
+    - 동일 네트워크에서 다른 HOST를 대신하여 ARP Request에 응답토록 하는 프로토콜
     - ProxyTable에 수신받은 네트워크 정보가 있으면, MAC주소를 알려줌
   - Gratuitous ARP
     - 네트워크 상에서 같은 IP를 사용하는 HOST가 있는 지 검사
