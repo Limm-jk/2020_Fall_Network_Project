@@ -295,7 +295,10 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
 					arpLayer.setDstIp(dstIP);
 					
-					arpLayer.Send(new byte[0], 0);
+					TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
+					tcpLayer.Send(new byte[0], 0);
+					
+					//arpLayer.Send(new byte[0], 0);
 					
 				} catch (UnknownHostException e1) {
 					e1.printStackTrace();
@@ -373,7 +376,10 @@ public class ArpAppLayer extends JFrame implements BaseLayer{
 					e1.printStackTrace();
 				}
 				
-				arpLayer.Send(new byte[0], 0);
+				TCPLayer tcpLayer = (TCPLayer)m_LayerMgr.GetLayer("TCP");
+				tcpLayer.Send(new byte[0], 0);
+				
+				//arpLayer.Send(new byte[0], 0);
 				GARPTextField.setText("");
 			}
 		}
