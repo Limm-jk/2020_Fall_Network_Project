@@ -28,6 +28,7 @@ IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
 - WMware WorkStation player 15.5
 
 ## 실습 시나리오  
+![](./scenario.png)  
 **Basic ARP**  
 1.  1번 컴퓨터에서 3번 컴퓨터의 IP주소를 입력 후 Send.  
 2.  ArpAppLayer에서 TCP, IP, ARP, Ethernet, NI를 거쳐 2, 3번 컴퓨터로 브로드캐스팅 전달  
