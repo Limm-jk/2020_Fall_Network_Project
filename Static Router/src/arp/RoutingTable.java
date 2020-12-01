@@ -1,10 +1,8 @@
 package arp;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 public class RoutingTable {
     private ArrayList<RoutingRow> table = new ArrayList<>();
@@ -66,9 +64,7 @@ public class RoutingTable {
 //        Sort by Netmask -> Longest Prefix
         @Override
         public int compareTo(RoutingRow row) {
-            if(this.getCountNetmask() > row.getCountNetmask()) return -1;
-            else if(this.getCountNetmask() < row.getCountNetmask()) return 1;
-            else return 0;
+            return Integer.compare(row.getCountNetmask(), this.getCountNetmask());
         }
 
 //        Lonest Prefix를 위한 1의 갯수
