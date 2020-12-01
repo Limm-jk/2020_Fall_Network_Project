@@ -11,6 +11,8 @@ public class RoutingTable {
 
     public void add(RoutingRow r){
         table.add(r);
+//      Sort by Netmask -> Longest Prefix
+        Collections.sort(table);
     }
     public RoutingRow FindRow(byte[] destination){
         RoutingRow ans = null;
@@ -37,22 +39,60 @@ public class RoutingTable {
     public RoutingRow Routing(byte[] destination){
         //flags[0] = Up, flags[1] = Gateway, flags[2] = Host
         if(table.size() == 0) return null;
+        byte[] bytes = new byte[4];
 
-        return null;
+//        맨 위부터 찾아서 걸리면 그게 longest prefix임
+        for(RoutingRow row : table){
+            for (int i = 0; i < 4; i++) {
+                bytes[i] = (byte) (row.getNetmask()[i] & destination[i]);
+            }
+            if(Arrays.equals(bytes, row.destination)) {
+                return row;
+            }
+        }
+        return table.get(table.size() - 1);
     }
 
-    public class RoutingRow{
+    public class RoutingRow implements Comparable<RoutingRow>{
         private byte[] destination;
-        private int netmask;
+        private byte[] netmask;
+        private int CountNetmask;
         private byte[] gateway;
         private boolean[] flags; //flags[0] = Up, flags[1] = Gateway, flags[2] = Host
         private String interfaceName;
         int metric;
 
+//        Comparable
+//        Sort by Netmask -> Longest Prefix
+        @Override
+        public int compareTo(RoutingRow row) {
+            if(this.getCountNetmask() > row.getCountNetmask()) return -1;
+            else if(this.getCountNetmask() < row.getCountNetmask()) return 1;
+            else return 0;
+        }
+
+//        Lonest Prefix를 위한 1의 갯수
+//        거꾸로 연산했지만... 문제 없을듯?
+        public int CountOne(byte[] netmask){
+            int count = 0;
+            for(byte i : netmask){
+                System.out.print(i);
+                for(int q = 0; q<8; q ++){
+                    if ((i & 1) == 1){
+                        count ++;
+
+                    }
+                    i = (byte) (i >> 1);
+                }
+            }
+            return count;
+        }
+
 //        Constructor
-        public RoutingRow(byte[] destination, int netmask, byte[] gateway, boolean[] flags, String interfaceName, int metric) {
+        public RoutingRow(byte[] destination, byte[] netmask, byte[] gateway, boolean[] flags, String interfaceName, int metric) {
             this.destination = destination;
             this.netmask = netmask;
+            this.CountNetmask = CountOne(netmask);
             this.gateway = gateway;
             this.flags = flags;
             this.interfaceName = interfaceName;
@@ -69,13 +109,19 @@ public class RoutingTable {
             this.destination = destination;
         }
 
-//        Make Getter
-        public int getNetmask() {
+//        Mask Getter
+        public byte[] getNetmask() {
             return netmask;
         }
 
-        public void setNetmask(int netmask) {
+        public void setNetmask(byte[] netmask) {
             this.netmask = netmask;
+            this.CountNetmask = CountOne(netmask);
+        }
+
+//        mask counter getter
+        public int getCountNetmask() {
+            return CountNetmask;
         }
 
 //        Gate getter
@@ -104,9 +150,5 @@ public class RoutingTable {
         public void setInterfaceName(String interfaceName) {
             this.interfaceName = interfaceName;
         }
-
-
-
-
     }
 }
