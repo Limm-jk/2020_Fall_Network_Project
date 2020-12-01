@@ -12,17 +12,6 @@ public class RoutingTable {
 //      Sort by Netmask -> Longest Prefix
         Collections.sort(table);
     }
-    public RoutingRow FindRow(byte[] destination){
-        RoutingRow ans = null;
-
-        for (int i = 0; i < table.size(); i++) {
-            RoutingRow row = table.get(i);
-            if(Arrays.equals(destination, row.destination)){
-                ans = row;
-            }
-        }
-        return ans;
-    }
     public void remove(byte[] destination){
         RoutingRow routingRow;
         for (int i = 0; i < table.size(); i++) {
