@@ -1,6 +1,7 @@
-package arp;
+package staticRouting;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class IPLayer implements BaseLayer{
@@ -9,6 +10,24 @@ public class IPLayer implements BaseLayer{
 	public BaseLayer p_UnderLayer = null;
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
 	IPHeader m_sHeader = new IPHeader();
+	
+	// Set Routing Table
+	RoutingTable routingTable;
+	public void setRoutingTable(RoutingTable table) {
+		this.routingTable = table;
+	}
+	
+	// Set my Ethernet Layer
+	EthernetLayer ehternetLayer;
+	public void setEthernetLayer(EthernetLayer ethernet) {
+		this.ehternetLayer = ethernet;
+	}
+	
+	// other IP port setting
+	public IPLayer otherIPLayer;	
+	public void setOtherIP(IPLayer iplayer) {
+		otherIPLayer = iplayer;
+	}
 	
 	public IPLayer(String pName) {
 		pLayerName = pName;
@@ -87,14 +106,48 @@ public class IPLayer implements BaseLayer{
 	
 	public boolean Send(byte[] input, int length) {
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
-		GetUnderLayer().Send(bytes, bytes.length);
+		ehternetLayer.Send(bytes, bytes.length);
 		return true;
 	}
 	
 	public boolean Receive(byte[] input) {
+		//올라온 데이터 IP랑 라우팅 테이블이랑 비교해서 Port2 로 전송
+		byte[] srcIP = new byte[] {input[12], input[13], input[14], input[15]};
+		byte[] dstIP = new byte[] {input[16], input[17], input[18], input[19]};
+		
+		if(Arrays.equals(dstIP, this.m_sHeader.ip_src)) {
+			byte[] buf = input;
+
+            m_sHeader.setDstIp(srcIP);
+            buf = removeHeader(input);
+            buf[0] = 0x00;
+            buf = ObjToByte(m_sHeader, buf, buf.length);
+
+            return ehternetLayer.Send(buf, buf.length);
+		}
+		
+		RoutingTable.RoutingRow targetRow = routingTable.FindRow(dstIP);
+		
+		String myport = this.GetLayerName();
+		if(myport == targetRow.getInterfaceName()) {
+			ehternetLayer.Send(input, input.length);
+		}
+		else {
+			otherIPLayer.Send(input, input.length);
+		}
 		
 		return true;
 	}
+	
+    public byte[] removeHeader(byte[] input) {
+        int len = input.length;
+        byte[] buf = new byte[len-20];
+
+        for (int i = 20; i < len; i++) {
+            buf[i-20] = input[i];
+        }
+        return buf;
+    }
 	
 	@Override
     public String GetLayerName() {

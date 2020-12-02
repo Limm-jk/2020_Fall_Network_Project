@@ -1,4 +1,4 @@
-package arp;
+package staticRouting;
 
 import java.util.ArrayList;
 
@@ -9,6 +9,16 @@ public class EthernetLayer implements BaseLayer {
 	public BaseLayer p_UnderLayer = null;
 	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
 	_ETHERNET_Frame m_sHeader;
+	
+	IPLayer ipLayer;
+	public void setIPLayer(IPLayer ipLayer) {
+		this.ipLayer = ipLayer;
+	}
+	
+	ARPLayer arpLayer;
+	public void setARPLayer(ARPLayer arpLayer) {
+		this.arpLayer = arpLayer;
+	}
 	
 	public EthernetLayer(String pName) {
 		// super(pName);
@@ -89,6 +99,14 @@ public class EthernetLayer implements BaseLayer {
 			}
 			SetEnetDstAddress(dstMac);
 		}
+		else {
+			byte dstIP[] = new byte[] {input[16], input[17], input[18], input[19]};
+			ARPLayer.ARPCache cache = arpLayer.getCache(dstIP);
+			
+			SetEnetDstAddress(cache.mac);
+			m_sHeader.enet_type[0] = (byte) 0x08;
+			m_sHeader.enet_type[1] = (byte) 0x00;
+		}
 		
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
 		this.GetUnderLayer().Send(bytes, length + 14);
@@ -118,11 +136,11 @@ public class EthernetLayer implements BaseLayer {
 				((ARPLayer)this.GetUpperLayer(0)).Receive(data);
 				return true;
 			}
-//			else if(temp_type == (byte)0x2090){
-//				data = RemoveEthernetHeader(input, input.length);
-//				((FileAppLayer)this.GetUpperLayer(1)).Receive(data);
-//				return true;
-//			}
+			else if (temp_type == 0x0800){
+	            input = RemoveEthernetHeader(input, input.length);
+	            ipLayer.Receive(input);
+	            return true;
+	        }
 		}
 		
 		return false;

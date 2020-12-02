@@ -1,4 +1,4 @@
-package arp;
+package staticRouting;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -7,6 +7,9 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -21,10 +24,16 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
-public class RouterAppLayer extends JFrame{
-    public int nUpperLayerCount = 0;
-    public String pLayerName = null;
+import staticRouting.ARPLayer.ARPCache;
 
+
+public class RouterAppLayer extends JFrame implements BaseLayer{
+	public int nUpperLayerCount = 0;
+	public String pLayerName = null;
+	public BaseLayer p_UnderLayer = null;
+	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
+	BaseLayer UnderLayer;
+	
     private JPanel contentPane;
     private JTextField GARPTextField;
     private JButton RoutingAdd;
@@ -51,13 +60,72 @@ public class RouterAppLayer extends JFrame{
     private JTextField proxyEntryIp;
     private JTextField proxyEntryMac;
 
-
     static int adapterNumber = 0;
-
+    private static LayerManager m_LayerMgr = new LayerManager();
+    
+    private static RoutingTable routingTable = new RoutingTable();
+    
     public static void main(String[] args) throws IOException {
-
-        RouterAppLayer routerAppLayer = new RouterAppLayer("GUI");
-
+    	
+    	NILayer[] niLayer = new NILayer[2];
+    	EthernetLayer[] ethernetLayer = new EthernetLayer[2];
+    	ARPLayer[] arpLayer = new ARPLayer[2];
+    	IPLayer[] ipLayer = new IPLayer[2];
+    	
+    	
+    	niLayer[0] = new NILayer("NI0");
+    	niLayer[1] = new NILayer("NI1");
+    	
+    	ethernetLayer[0] = new EthernetLayer("Ethernet0");
+    	ethernetLayer[1] = new EthernetLayer("Ethernet1");
+    	
+    	arpLayer[0] = new ARPLayer("ARP0");
+    	arpLayer[1] = new ARPLayer("ARP1");
+    	
+    	ipLayer[0] = new IPLayer("IP0");
+    	ipLayer[1] = new IPLayer("IP1");
+    	
+    	RouterAppLayer routerAppLayer = new RouterAppLayer("GUI");
+    	
+    	m_LayerMgr.AddLayer(niLayer[0]);
+    	m_LayerMgr.AddLayer(niLayer[1]);
+    	m_LayerMgr.AddLayer(ethernetLayer[0]);
+    	m_LayerMgr.AddLayer(ethernetLayer[1]);
+    	m_LayerMgr.AddLayer(arpLayer[0]);
+    	m_LayerMgr.AddLayer(arpLayer[1]);
+    	m_LayerMgr.AddLayer(ipLayer[0]);
+    	m_LayerMgr.AddLayer(ipLayer[1]);
+    	m_LayerMgr.AddLayer(routerAppLayer);
+    	
+    	// port 0
+    	m_LayerMgr.ConnectLayers(" NI0 ( *Ethernet0 ( *ARP0 ( *IP0 ) ) ) ");
+    	// port 1
+    	m_LayerMgr.ConnectLayers(" NI1 ( *Ethernet1 ( *ARP1 ( *IP1 ) ) ) ");
+    	
+    	// TODO : RouterAppLayer Setting
+		ethernetLayer[0].setIPLayer(ipLayer[0]);
+		ethernetLayer[1].setIPLayer(ipLayer[1]);
+		
+		ethernetLayer[0].setARPLayer(arpLayer[0]);
+		ethernetLayer[1].setARPLayer(arpLayer[1]);
+		
+    	// IP, Mac Setting
+    	ipLayer[0].setEthernetLayer(ethernetLayer[0]);
+    	ipLayer[1].setEthernetLayer(ethernetLayer[1]);
+    	
+    	ethernetLayer[0].SetEnetSrcAddress(niLayer[0].m_pAdapterList.get(0).getHardwareAddress());
+    	ethernetLayer[1].SetEnetDstAddress(niLayer[1].m_pAdapterList.get(1).getHardwareAddress());
+    	
+    	ipLayer[0].setSrcIp(niLayer[0].m_pAdapterList.get(0).getAddresses().get(0).getAddr().getData());
+    	ipLayer[1].setSrcIp(niLayer[1].m_pAdapterList.get(1).getAddresses().get(0).getAddr().getData());
+    	
+    	arpLayer[0].setSrcIp(niLayer[0].m_pAdapterList.get(0).getAddresses().get(0).getAddr().getData());
+    	arpLayer[1].setSrcIp(niLayer[1].m_pAdapterList.get(1).getAddresses().get(0).getAddr().getData());
+    	arpLayer[0].setSrcMac(niLayer[0].m_pAdapterList.get(0).getHardwareAddress());
+    	arpLayer[1].setSrcMac(niLayer[1].m_pAdapterList.get(1).getHardwareAddress());
+    	
+    	niLayer[0].SetAdapterNumber(0);
+    	niLayer[1].SetAdapterNumber(1);
     }
 
 
@@ -87,7 +155,7 @@ public class RouterAppLayer extends JFrame{
 
         RoutingAdd = new JButton("Add");
         RoutingAdd.setBounds(26, 300, 146, 38);
-        RoutingAdd.addActionListener((new ActionListener() {
+        RoutingAdd.addActionListener((new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new RoutingWindow();
             }}));
@@ -130,7 +198,7 @@ public class RouterAppLayer extends JFrame{
 
         ProxyAdd = new JButton("Add");
         ProxyAdd.setBounds(32, 139, 136, 30);
-        ProxyAdd.addActionListener(new ActionListener() {
+        ProxyAdd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new proxyWindow();
             }});
@@ -143,7 +211,7 @@ public class RouterAppLayer extends JFrame{
 
         /*-----Exit / Cancel-----*/
         JButton btnEnd = new JButton("Exit");
-        btnEnd.addActionListener(new ActionListener() {
+        btnEnd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
             }
@@ -152,7 +220,7 @@ public class RouterAppLayer extends JFrame{
         contentPane.add(btnEnd);
 
         JButton btnCancel = new JButton("Cancel");
-        btnCancel.addActionListener(new ActionListener() {
+        btnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
             }
@@ -295,7 +363,6 @@ public class RouterAppLayer extends JFrame{
             InterfaceLabel.setFont(new Font("font", Font.BOLD, 20));
             InterfaceLabel.setBounds(20, 180, 200, 34);
             contentPane.add(InterfaceLabel);
-
             JComboBox InterfaceBox = new JComboBox();
             InterfaceBox.setBounds(172, 182, 223, 30);
             contentPane.add(InterfaceBox);
@@ -340,252 +407,366 @@ public class RouterAppLayer extends JFrame{
 
             setVisible(true);
         }
+        
     }
+    
+	public void updateARPCacheTable(ArrayList<ARPCache> cache_table) {
+		// GUI에 cache table 업데이트
+		//ip주소를 string으로 변환 필요
+		//mac주소를 string으로 변환 필요
+		//ARPTable 변수 (JTable)의 row에 cache table 업데이터
+		
+		// 모든 행 삭제
+		if (arpModel.getRowCount() > 0) {
+		    for (int i = arpModel.getRowCount() - 1; i > -1; i--) {
+		        arpModel.removeRow(i);
+		    }
+		}
+		
+		//cache_table의 모든 행 추가
+		Iterator<ARPCache> iter = cache_table.iterator();
+    	while(iter.hasNext()) {
+    		ARPCache cache = iter.next();
+    		String[] row = new String[3];
+    		
+    		row[0] = ipByteToString(cache.ip);
+    		if(cache.status == false) {
+    			row[1] = "??????????";
+    			row[2] = "incomplete";
+    		}
+    		else {
+    			row[1] = macByteToString(cache.mac);
+    			row[2] = "complete";
+    		}
+    		
+    		arpModel.addRow(row);
+    	}
+	}
+	
+	
+	public String macByteToString(byte[] byte_MacAddress) { //MAC Byte주소를 String으로 변환
+		String MacAddress = "";
+		for (int i = 0; i < 6; i++) { 
+			//2자리 16진수를 대문자로, 그리고 1자리 16진수는 앞에 0을 붙임.
+			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
+			
+			if (i != 5) {
+				//2자리 16진수 자리 단위 뒤에 "-"붙여주기
+				MacAddress += ":";
+			}
+		}
+		return MacAddress;
+	}
 
-//        class btnListener implements ActionListener{
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                /*----ARP Action-----*/
-//                if(e.getSource() == ARP_IPSend) {
-//                    //IP �엯�젰 �썑 send踰꾪듉 �닃���쓣 �븣
-//                    String inputIP = IPTextField.getText().trim();
-//
-//                    InetAddress ip = null;
-//                    try {
-//                        ip = InetAddress.getByName(inputIP);
-//                        byte[] dstIP = ip.getAddress();
-//
-//                        ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-//                        arpLayer.setDstIp(dstIP);
-//
-//                        arpLayer.Send(new byte[0], 0);
-//
-//                    } catch (UnknownHostException e1) {
-//                        e1.printStackTrace();
-//                    }
-//
-//                    IPTextField.setText("");
-//                }
-//
-//                else if(e.getSource() == ARPItemDelete) {
-//                    //ItemDelete 踰꾪듉�쓣 �닃���쓣 �븣
-//                    ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-//                    int selectRow = ARPTable.getSelectedRow();
-//                    if(selectRow == -1) {
-//                        return;
-//                    }
-//                    else {
-//                        String ipAddress = arpModel.getValueAt(selectRow, 0).toString();
-//                        InetAddress ip = null;
-//                        try {
-//                            ip = InetAddress.getByName(ipAddress);
-//                        } catch (UnknownHostException e1) {
-//                            // TODO �옄�룞 �깮�꽦�맂 catch 釉붾줉
-//                            e1.printStackTrace();
-//                        }
-//                        byte[] byteIp = ip.getAddress();
-//                        arpLayer.cacheRemove(byteIp);
-//                    }
-//                }
-//
-//                else if(e.getSource() == ARPAllDelete) {
-//                    //AllDelete 踰꾪듉�쓣 �닃���쓣 �븣
-//                    ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-//                    arpLayer.cacheRemoveAll();
-//                }
-//
-//                /*----- Proxy Action -----*/
-//                else if(e.getSource() == ProxyAdd) {
-//                    //Add 踰꾪듉�쓣 �닃���쓣 �븣
-//                    new proxyWindow();
-//                }
-//
-//                else if(e.getSource() == ProxyDelete) {
-//                    //Delete 踰꾪듉�쓣 �닃���쓣 �븣
-//                    ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-//
-//                    int selectRow = ProxyTable.getSelectedRow();
-//                    if(selectRow == -1) {
-//                        return;
-//                    }
-//                    else {
-//                        String ipAddress = proxyModel.getValueAt(selectRow, 0).toString();
-//                        InetAddress ip = null;
-//                        try {
-//                            ip = InetAddress.getByName(ipAddress);
-//                        } catch (UnknownHostException e1) {
-//                            // TODO �옄�룞 �깮�꽦�맂 catch 釉붾줉
-//                            e1.printStackTrace();
-//                        }
-//                        byte[] byteIp = ip.getAddress();
-//                        arpLayer.proxyRemove(byteIp);
-//                    }
-//                }
-//
-//                /*----- GARP Action -----*/
-//                else if(e.getSource() == GARPSend) {
-//                    //GARP Send踰꾪듉�쓣 �닃���쓣 �븣
-//                    byte[] mac = macStringToByte(GARPTextField.getText());
-//
-//                    ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-//                    EthernetLayer ethernetLayer = (EthernetLayer)m_LayerMgr.GetLayer("Ethernet");
-//                    arpLayer.setSrcMac(mac);
-//                    try {
-//                        arpLayer.setDstIp(InetAddress.getLocalHost().getAddress());
-//                    } catch (UnknownHostException e1) {
-//                        e1.printStackTrace();
-//                    }
-//                    ethernetLayer.SetEnetSrcAddress(mac);
-//
-//                    // send
-//                    arpLayer.Send(new byte[0], 0);
-//                    GARPTextField.setText("");
-//                }
-//            }
-//        }
-//
-//        public String macByteToString(byte[] byte_MacAddress) { //MAC Byte二쇱냼瑜� String�쑝濡� 蹂��솚
-//            String MacAddress = "";
-//            for (int i = 0; i < 6; i++) {
-//                //2�옄由� 16吏꾩닔瑜� ��臾몄옄濡�, 洹몃━怨� 1�옄由� 16吏꾩닔�뒗 �븵�뿉 0�쓣 遺숈엫.
-//                MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
-//
-//                if (i != 5) {
-//                    //2�옄由� 16吏꾩닔 �옄由� �떒�쐞 �뮘�뿉 "-"遺숈뿬二쇨린
-//                    MacAddress += ":";
-//                }
-//            }
-//            return MacAddress;
-//        }
-//
-//        public byte[] macStringToByte(String mac) {
-//            // string mac 二쇱냼�뒗 "00:00:00:00:00:00" �삎�깭
-//            byte[] ret = new byte[6];
-//
-//            StringTokenizer tokens = new StringTokenizer(mac, ":");
-//
-//            for (int i = 0; tokens.hasMoreElements(); i++) {
-//
-//                String temp = tokens.nextToken();
-//
-//                try {
-//                    ret[i] = Byte.parseByte(temp, 16);
-//                } catch (NumberFormatException e) {
-//                    int minus = (Integer.parseInt(temp, 16)) - 256;
-//                    ret[i] = (byte) (minus);
-//                }
-//            }
-//
-//            return ret;
-//        }
-//
-//        public String ipByteToString(byte[] stringIP) {
-//            String result = "";
-//            for(byte raw : stringIP){
-//                result += raw & 0xFF;
-//                result += ".";
-//            }
-//            return result.substring(0, result.length()-1);
-//        }
-//
-//        public void updateARPCacheTable(ArrayList<ARPCache> cache_table) {
-//            // GUI�뿉 cache table �뾽�뜲�씠�듃
-//            //ip二쇱냼瑜� string�쑝濡� 蹂��솚 �븘�슂
-//            //mac二쇱냼瑜� string�쑝濡� 蹂��솚 �븘�슂
-//            //ARPTable 蹂��닔 (JTable)�쓽 row�뿉 cache table �뾽�뜲�씠�꽣
-//
-//            // 紐⑤뱺 �뻾 �궘�젣
-//            if (arpModel.getRowCount() > 0) {
-//                for (int i = arpModel.getRowCount() - 1; i > -1; i--) {
-//                    arpModel.removeRow(i);
-//                }
-//            }
-//
-//            //cache_table�쓽 紐⑤뱺 �뻾 異붽�
-//            Iterator<ARPCache> iter = cache_table.iterator();
-//            while(iter.hasNext()) {
-//                ARPCache cache = iter.next();
-//                String[] row = new String[3];
-//
-//                row[0] = ipByteToString(cache.ip);
-//                if(cache.status == false) {
-//                    row[1] = "??????????";
-//                    row[2] = "incomplete";
-//                }
-//                else {
-//                    row[1] = macByteToString(cache.mac);
-//                    row[2] = "complete";
-//                }
-//
-//                arpModel.addRow(row);
-//            }
-//        }
-//
-//        public void updateProxyEntry(ArrayList<Proxy> proxyEntry) {
-//            // GUI�뿉 proxy Entry �뾽�뜲�씠�듃
-//            // 紐⑤뱺 �뻾 �궘�젣
-//            if (proxyModel.getRowCount() > 0) {
-//                for (int i = proxyModel.getRowCount() - 1; i > -1; i--) {
-//                    proxyModel.removeRow(i);
-//                }
-//            }
-//
-//            Iterator<Proxy> iter = proxyEntry.iterator();
-//            while(iter.hasNext()) {
-//                Proxy proxy = iter.next();
-//                String[] row = new String[2];
-//
-//                row[0] = ipByteToString(proxy.ip);
-//                row[1] = macByteToString(proxy.mac);
-//
-//                proxyModel.addRow(row);
-//            }
-//        }
-//
-//        @Override
-//        public void SetUnderLayer(BaseLayer pUnderLayer) {
-//            // TODO Auto-generated method stub
-//            if (pUnderLayer == null)
-//                return;
-//            this.p_UnderLayer = pUnderLayer;
-//        }
-//
-//        @Override
-//        public void SetUpperLayer(BaseLayer pUpperLayer) {
-//            // TODO Auto-generated method stub
-//            if (pUpperLayer == null)
-//                return;
-//            this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
-//            // nUpperLayerCount++;
-//        }
-//
-//        @Override
-//        public String GetLayerName() {
-//            // TODO Auto-generated method stub
-//            return pLayerName;
-//        }
-//
-//        @Override
-//        public BaseLayer GetUnderLayer() {
-//            // TODO Auto-generated method stub
-//            if (p_UnderLayer == null)
-//                return null;
-//            return p_UnderLayer;
-//        }
-//
-//        @Override
-//        public BaseLayer GetUpperLayer(int nindex) {
-//            // TODO Auto-generated method stub
-//            if (nindex < 0 || nindex > nUpperLayerCount || nUpperLayerCount < 0)
-//                return null;
-//            return p_aUpperLayer.get(nindex);
-//        }
-//
-//        @Override
-//        public void SetUpperUnderLayer(BaseLayer pUULayer) {
-//            this.SetUpperLayer(pUULayer);
-//            pUULayer.SetUnderLayer(this);
-//
-//        }
+	public byte[] macStringToByte(String mac) {
+		// string mac 주소는 "00:00:00:00:00:00" 형태
+		byte[] ret = new byte[6];
+
+		StringTokenizer tokens = new StringTokenizer(mac, ":");
+
+		for (int i = 0; tokens.hasMoreElements(); i++) {
+
+			String temp = tokens.nextToken();
+
+			try {
+				ret[i] = Byte.parseByte(temp, 16);
+			} catch (NumberFormatException e) {
+				int minus = (Integer.parseInt(temp, 16)) - 256;
+				ret[i] = (byte) (minus);
+			}
+		}
+
+		return ret;
+	}
+	
+	public String ipByteToString(byte[] stringIP) {
+		String result = "";
+		for(byte raw : stringIP){
+			result += raw & 0xFF;
+			result += ".";
+		}
+		return result.substring(0, result.length()-1);		
+	}
+	
+    @Override
+	public void SetUnderLayer(BaseLayer pUnderLayer) {
+		// TODO Auto-generated method stub
+		if (pUnderLayer == null)
+			return;
+		this.p_UnderLayer = pUnderLayer;
+	}
+
+	@Override
+	public void SetUpperLayer(BaseLayer pUpperLayer) {
+		// TODO Auto-generated method stub
+		if (pUpperLayer == null)
+			return;
+		this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
+		// nUpperLayerCount++;
+	}
+
+	@Override
+	public String GetLayerName() {
+		// TODO Auto-generated method stub
+		return pLayerName;
+	}
+
+	@Override
+	public BaseLayer GetUnderLayer() {
+		// TODO Auto-generated method stub
+		if (p_UnderLayer == null)
+			return null;
+		return p_UnderLayer;
+	}
+
+	@Override
+	public BaseLayer GetUpperLayer(int nindex) {
+		// TODO Auto-generated method stub
+		if (nindex < 0 || nindex > nUpperLayerCount || nUpperLayerCount < 0)
+			return null;
+		return p_aUpperLayer.get(nindex);
+	}
+
+	@Override
+	public void SetUpperUnderLayer(BaseLayer pUULayer) {
+		this.SetUpperLayer(pUULayer);
+		pUULayer.SetUnderLayer(this);
+
+	}
+
+
+/*
+package staticRouting;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+
+import staticRouting.ARPLayer.ARPCache;
+import staticRouting.ARPLayer.Proxy;
+
+public class RouterAppLayer extends JFrame implements BaseLayer{
+	public int nUpperLayerCount = 0;
+	public String pLayerName = null;
+	public BaseLayer p_UnderLayer = null;
+	public ArrayList<BaseLayer> p_aUpperLayer = new ArrayList<BaseLayer>();
+	BaseLayer UnderLayer;
+	
+	
+	private DefaultTableModel arpModel, proxyModel;
+	String arpModelHeader[] = {"IpAddress", "MacAddress", "Status"};
+	String[][] arpModelContents = new String[0][3];
+	String proxyModelHeader[] = {"IpAddress", "MacAddress"};
+	String[][] proxyModelContents = new String[0][2];
+	
+	private static LayerManager m_LayerMgr = new LayerManager();
+	
+	static int adapterNumber = 0;
+	
+	public static void main(String[] args) throws IOException {
+		NILayer niLayer = new NILayer("NI");
+		EthernetLayer ethernetLayer = new EthernetLayer("Ethernet");
+		ARPLayer arpLayer = new ARPLayer("ARP");
+		IPLayer ipLayer = new IPLayer("IP");
+		RouterAppLayer routerAppLayer = new RouterAppLayer("GUI");
+		
+		m_LayerMgr.AddLayer(niLayer);
+		m_LayerMgr.AddLayer(ethernetLayer);
+		m_LayerMgr.AddLayer(arpLayer);
+		m_LayerMgr.AddLayer(ipLayer);
+		m_LayerMgr.AddLayer(routerAppLayer);
+
+		m_LayerMgr.ConnectLayers(" NI ( *Ethernet ( *ARP ( *IP ( *GUI ) ) ) )");
+		
+		arpLayer.setArpAppLayer(routerAppLayer);
+		ipLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
+		arpLayer.setSrcIp(InetAddress.getLocalHost().getAddress());
+		arpLayer.setSrcMac(niLayer.GetAdapterObject(adapterNumber).getHardwareAddress());
+		
+		niLayer.SetAdapterNumber(0);
+		niLayer.Receive();
+	}
+	
+	
+	public RouterAppLayer(String pName) throws IOException {
+		pLayerName = pName;
+		
+		
+	}
+	
+	class proxyWindow extends JFrame{
+		
+	}
+	
+	class btnListener implements ActionListener{
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+		}
+	}
+	
+	public String macByteToString(byte[] byte_MacAddress) { //MAC Byte주소를 String으로 변환
+		String MacAddress = "";
+		for (int i = 0; i < 6; i++) { 
+			//2자리 16진수를 대문자로, 그리고 1자리 16진수는 앞에 0을 붙임.
+			MacAddress += String.format("%02X%s", byte_MacAddress[i], (i < MacAddress.length() - 1) ? "" : "");
+			
+			if (i != 5) {
+				//2자리 16진수 자리 단위 뒤에 "-"붙여주기
+				MacAddress += ":";
+			}
+		}
+		return MacAddress;
+	}
+
+	public byte[] macStringToByte(String mac) {
+		// string mac 주소는 "00:00:00:00:00:00" 형태
+		byte[] ret = new byte[6];
+
+		StringTokenizer tokens = new StringTokenizer(mac, ":");
+
+		for (int i = 0; tokens.hasMoreElements(); i++) {
+
+			String temp = tokens.nextToken();
+
+			try {
+				ret[i] = Byte.parseByte(temp, 16);
+			} catch (NumberFormatException e) {
+				int minus = (Integer.parseInt(temp, 16)) - 256;
+				ret[i] = (byte) (minus);
+			}
+		}
+
+		return ret;
+	}
+	
+	public String ipByteToString(byte[] stringIP) {
+		String result = "";
+		for(byte raw : stringIP){
+			result += raw & 0xFF;
+			result += ".";
+		}
+		return result.substring(0, result.length()-1);		
+	}
+	
+	public void updateARPCacheTable(ArrayList<ARPCache> cache_table) {
+		// GUI에 cache table 업데이트
+		//ip주소를 string으로 변환 필요
+		//mac주소를 string으로 변환 필요
+		//ARPTable 변수 (JTable)의 row에 cache table 업데이터
+		
+		// 모든 행 삭제
+		if (arpModel.getRowCount() > 0) {
+		    for (int i = arpModel.getRowCount() - 1; i > -1; i--) {
+		        arpModel.removeRow(i);
+		    }
+		}
+		
+		//cache_table의 모든 행 추가
+		Iterator<ARPCache> iter = cache_table.iterator();
+    	while(iter.hasNext()) {
+    		ARPCache cache = iter.next();
+    		String[] row = new String[3];
+    		
+    		row[0] = ipByteToString(cache.ip);
+    		if(cache.status == false) {
+    			row[1] = "??????????";
+    			row[2] = "incomplete";
+    		}
+    		else {
+    			row[1] = macByteToString(cache.mac);
+    			row[2] = "complete";
+    		}
+    		
+    		arpModel.addRow(row);
+    	}
+	}
+	
+	public void updateProxyEntry(ArrayList<Proxy> proxyEntry) {
+		// GUI에 proxy Entry 업데이트
+		// 모든 행 삭제
+		if (proxyModel.getRowCount() > 0) {
+		    for (int i = proxyModel.getRowCount() - 1; i > -1; i--) {
+		        proxyModel.removeRow(i);
+		    }
+		}
+		
+		Iterator<Proxy> iter = proxyEntry.iterator();
+    	while(iter.hasNext()) {
+    		Proxy proxy = iter.next();
+    		String[] row = new String[2];
+    		
+    		row[0] = ipByteToString(proxy.ip);
+    		row[1] = macByteToString(proxy.mac);
+    		
+    		proxyModel.addRow(row);
+    	}
+	}
+	
+	@Override
+	public void SetUnderLayer(BaseLayer pUnderLayer) {
+		// TODO Auto-generated method stub
+		if (pUnderLayer == null)
+			return;
+		this.p_UnderLayer = pUnderLayer;
+	}
+
+	@Override
+	public void SetUpperLayer(BaseLayer pUpperLayer) {
+		// TODO Auto-generated method stub
+		if (pUpperLayer == null)
+			return;
+		this.p_aUpperLayer.add(nUpperLayerCount++, pUpperLayer);
+		// nUpperLayerCount++;
+	}
+
+	@Override
+	public String GetLayerName() {
+		// TODO Auto-generated method stub
+		return pLayerName;
+	}
+
+	@Override
+	public BaseLayer GetUnderLayer() {
+		// TODO Auto-generated method stub
+		if (p_UnderLayer == null)
+			return null;
+		return p_UnderLayer;
+	}
+
+	@Override
+	public BaseLayer GetUpperLayer(int nindex) {
+		// TODO Auto-generated method stub
+		if (nindex < 0 || nindex > nUpperLayerCount || nUpperLayerCount < 0)
+			return null;
+		return p_aUpperLayer.get(nindex);
+	}
+
+	@Override
+	public void SetUpperUnderLayer(BaseLayer pUULayer) {
+		this.SetUpperLayer(pUULayer);
+		pUULayer.SetUnderLayer(this);
+
+	}
+	*/
 }
-
