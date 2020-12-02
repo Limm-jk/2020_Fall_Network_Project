@@ -1,4 +1,4 @@
-package arp;
+package staticRouting;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -15,14 +15,13 @@ public class ARPLayer implements BaseLayer{
 	ARPHeader m_sHeader = new ARPHeader();
 	
 	// 筌�癒��뻻占쎈�믭옙�뵠�뇡占� 占쎈씜占쎈쑓占쎌뵠占쎈뱜�몴占� 占쎌맄占쎈립 占쎌쟿占쎌뵠占쎈선 占쎄퐬占쎌젟
-	public static ArpAppLayer appLayer;
-	public void setArpAppLayer(ArpAppLayer Layer) {
+	public static RouterAppLayer appLayer;
+	public void setArpAppLayer(RouterAppLayer Layer) {
 		appLayer = Layer;
 	}
 	
 	// ARP Cache Table 占쎄문占쎄쉐
 	public static ArrayList<ARPCache> cache_table = new ArrayList<ARPCache>();
-	public static ArrayList<Proxy> proxyEntry = new ArrayList<Proxy>();
 	
 	public ARPLayer(String pName) {
 		pLayerName = pName;
@@ -129,7 +128,7 @@ public class ARPLayer implements BaseLayer{
 			addCacheTable(arpcache);
 			
 			// AppLayer占쎈퓠占쎄퐣 筌�癒��뻻占쎈�믭옙�뵠�뇡占� 占쎈씜占쎈쑓占쎌뵠占쎈뱜
-			updateCacheTable();
+//			updateCacheTable();
 		}
 		
 		byte[] bytes = ObjToByte(m_sHeader, input, length);
@@ -170,7 +169,7 @@ public class ARPLayer implements BaseLayer{
 					tempARP.mac = srcMac;
 				}
 			}
-			updateCacheTable();
+//			updateCacheTable();
 
 			//占쎄돌占쎈퓠野껓옙 占쎌궔 野껉퍔�뵠占쎌뵬筌롳옙 src, dst�몴占� 占쎈뮞占쎌넁占쎈릭�⑨옙 op�몴占� 0x02嚥∽옙 獄쏅떽�뵒 占쎌뜎 占쎌삺占쎌읈占쎈꽊
 			if(Arrays.equals(dstIp, m_sHeader.srcIp)) {
@@ -182,25 +181,6 @@ public class ARPLayer implements BaseLayer{
 				System.arraycopy(m_sHeader.srcIp, 0, input, 14, 4);		
 						
 				GetUnderLayer().Send(input, input.length);
-			}
-			//Proxy ARP 占쎈�믭옙�뵠�뇡遺얜즲 占쎌넇占쎌뵥
-			else {
-				Iterator<Proxy> iter = proxyEntry.iterator();
-				
-				while(iter.hasNext()) {
-					Proxy proxy = iter.next();
-					if(Arrays.equals(dstIp,  proxy.ip)) {
-						
-						//System.arraycopy(input,  15,  m_sHeader.srcMac,  0, 6);
-						input[7] = (byte)0x02;
-						src_dst_swap(input);
-						System.arraycopy(m_sHeader.srcMac, 0, input, 8, 6);	
-						
-						GetUnderLayer().Send(input, input.length);
-						break;
-					}
-				}
-				updateProxyEntry();
 			}
 		}
 		
@@ -227,7 +207,7 @@ public class ARPLayer implements BaseLayer{
 			}
 			
 			// AppLayer占쎈퓠占쎄퐣 筌�癒��뻻占쎈�믭옙�뵠�뇡占� 占쎈씜占쎈쑓占쎌뵠占쎈뱜
-			updateCacheTable();
+//			updateCacheTable();
 		}
 		
 		return true;
@@ -333,53 +313,8 @@ public class ARPLayer implements BaseLayer{
     	}
     	return null;
     }
-    
-    
-    public class Proxy{
-    	public byte[] ip = new byte[4];
-    	public byte[] mac = new byte[6];
-    	
-    	public Proxy(byte[] ip, byte[] mac) {
-    		this.ip = ip;
-    		this.mac = mac;
-    	}
-    }
-    
-    public Proxy getProxy(byte[] ip) {
-    	Iterator<Proxy> iter = proxyEntry.iterator();
-    	while(iter.hasNext()) {
-    		Proxy proxy = iter.next();
-    		if(Arrays.equals(ip, proxy.ip)) {
-    			return proxy;
-    		}
-    	}
-    	return null;
-    }
-    
-    public void proxyRemove(byte[] ip) {
-    	Iterator<Proxy> iter = proxyEntry.iterator();
-    	
-    	while(iter.hasNext()) {
-    		Proxy proxy = iter.next();
-    		if(Arrays.equals(ip, proxy.ip)) {
-    			iter.remove();
-    		}
-    	}
-    	updateProxyEntry();
-    }
-    
-    public void addProxy(byte[] ip, byte[] mac) {
-    	Proxy proxy = new Proxy(ip, mac);
-    	proxyEntry.add(proxy);
-    	updateProxyEntry();
-    }
-    
-    
+ 
     public void updateCacheTable() {
     	appLayer.updateARPCacheTable(cache_table);
-    }
-    
-    public void updateProxyEntry() {
-    	appLayer.updateProxyEntry(proxyEntry);
     }
 }
