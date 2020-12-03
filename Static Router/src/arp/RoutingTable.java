@@ -7,6 +7,10 @@ import java.util.Collections;
 public class RoutingTable {
     private ArrayList<RoutingRow> table = new ArrayList<>();
 
+    public RoutingRow getRoutingTableRow(byte[] destination, byte[] netmask, byte[] gateway, boolean[] flags, String interfaceName, int metric){
+        return new RoutingRow(destination, netmask, gateway, flags, interfaceName, metric);
+    }
+    
     public void add(RoutingRow r){
         table.add(r);
 //      Sort by Netmask -> Longest Prefix
@@ -50,6 +54,7 @@ public class RoutingTable {
         }
         return table.get(table.size() - 1);
     }
+
 
     public class RoutingRow implements Comparable<RoutingRow>{
         private byte[] destination;
@@ -147,4 +152,5 @@ public class RoutingTable {
             this.interfaceName = interfaceName;
         }
     }
+    
 }
