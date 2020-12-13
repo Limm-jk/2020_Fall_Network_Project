@@ -1,7 +1,10 @@
 # Computer Network
 - 이전 학기 [데이터 통신과목의 과제물](https://github.com/Limm-jk/2020_Spring_DataCommunication)을 바탕으로 이루어짐
-## 기능
-**ARP(Address Resolution Protocol)**  
+
+**ARP(Address Resolution Protocol)**   
+
+## ARP(Address Resolution Protocol)
+### 기능
 IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
   - ARP     
     - 일반적으로 응용 프로그램 등에 사용되는 주소는 IP주소(32bit)  
@@ -15,10 +18,8 @@ IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
     - 네트워크 상에서 같은 IP를 사용하는 HOST가 있는 지 검사
     - 자신의 IP를 목적지로 설정하여 전송
     - 응답이 있으면 해당 IP를 사용하는 HOST가 있음을 알 수 있음  
-    
-**Static Router**  
-곧할걸?
-## 개발 환경
+
+### 개발 환경
 원활한 ARP 테스트를 위하여 3개 이상의 가상 HOST필요. 
 - Windows OS
 - JAVA(-version 8) / Eclipse
@@ -27,7 +28,7 @@ IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
 - JnetPcap
 - WMware WorkStation player 15.5
 
-## 실습 시나리오  
+### 실습 시나리오  
 ![](./scenario.png)  
 **Basic ARP**  
 1.  1번 컴퓨터에서 3번 컴퓨터의 IP주소를 입력 후 Send.  
