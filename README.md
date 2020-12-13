@@ -2,7 +2,7 @@
 - 이전 학기 [데이터 통신과목의 과제물](https://github.com/Limm-jk/2020_Spring_DataCommunication)을 바탕으로 이루어짐
 
 **[ARP(Address Resolution Protocol)](https://github.com/Limm-jk/2020_Fall_Network_Project/blob/master/README.md#arpaddress-resolution-protocol)**   
-**Routing Table**
+**[Routing Table](https://github.com/Limm-jk/2020_Fall_Network_Project/blob/master/README.md#routing-table)**
 
 ## ARP(Address Resolution Protocol)
 ### 기능
@@ -80,7 +80,7 @@ IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
 - WMware WorkStation player 15.5
 
 ### 실습 시나리오  
-![](./scenario.png)  
+![](./scenario2.png)  
 **PC1 ↔ PC2**
 
 **Routing 프로그램 동작 전**
