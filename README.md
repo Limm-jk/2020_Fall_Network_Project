@@ -55,20 +55,16 @@ IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
 
 ## Routing Table
 
-### 기능
-IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
-  - ARP     
-    - 일반적으로 응용 프로그램 등에 사용되는 주소는 IP주소(32bit)  
-    - 실제 호스트 간 데이터 송신 시 이데넷 프레임의 목적지 인터페이스를 결정하는 것은 물리적 주소인 MAC주소(48bit)  
-    - 그러므로 논리적 주소(IP)를 알고 있을 때, 대응되는 물리적 주소(MAC)를 알아오는 과정 필요  
-    - 논리적인 IP주소와 물리적인 MAC주소의 대응을 위해 ARP를 사용   
-  - Proxy ARP
-    - 동일 네트워크에서 다른 HOST를 대신하여 ARP Request에 응답토록 하는 프로토콜
-    - ProxyTable에 수신받은 네트워크 정보가 있으면, MAC주소를 알려줌
-  - Gratuitous ARP
-    - 네트워크 상에서 같은 IP를 사용하는 HOST가 있는 지 검사
-    - 자신의 IP를 목적지로 설정하여 전송
-    - 응답이 있으면 해당 IP를 사용하는 HOST가 있음을 알 수 있음  
+Routing Table
+```
+Destination : Byte[4]
+NetMask : Byte[6]
+CountNetmask : Int
+GateWay : Byte[4]
+Flag : Boolean[3]
+Interface : String
+Metric : Int
+```
 
 ### 개발 환경
 원활한 ARP 테스트를 위하여 3개 이상의 가상 HOST필요. 
@@ -111,17 +107,17 @@ IP와 MAC의 대응관계를 성립하는 역할을 담당하는 Protocol
  
 2. 한 호스트에서 ping 기능으로 다른 네트워크의 호스트와 통신 가능 여부를 확인 요청
 
-  > PC에서 라우팅 경로를 확인 후 ping   
-  보내기 전 ARP cache에 정보가 없으면 ARP Request를 보내고 라우터에서 응답을 받은 Mac주소로 ping 전달  
-  이미 Host PC Cmd에서 arp –a 명령어를 사용했을 때 라우터 IP에 대한 Mac주소 가 entry에 존재하면 바로 ping 전달
+    * PC에서 라우팅 경로를 확인 후 ping   
+    * 보내기 전 ARP cache에 정보가 없으면 ARP Request를 보내고 라우터에서 응답을 받은 Mac주소로 ping 전달  
+    * 이미 Host PC Cmd에서 arp –a 명령어를 사용했을 때 라우터 IP에 대한 Mac주소 가 entry에 존재하면 바로 ping 전달
 
 3. PC1에서  PC2로 ping 보냄
 
 4. PC1과 직접적으로 연결된 라우터는 ICMP 메시지를 수신
-	>ICMP의 목적 IP 주소를 이용    
-	*Router의 Routing Table을 확인    
-*수신된 ICMP의 목적 IP 주소와 매칭되는 네트워크 인터페이스로 수신된 ICMP를 그대로 전달  
-*만약 Router가 자신의 서브넷에 포함된 호스트를 목적지로 한 ICMP 메시지를 수신한 경우에는 ARP cache table에서 해당 호스트에 대한 Ethernet address를 이용하여, ICMP 메시지를전달    
+    *  ICMP의 목적 IP 주소를 이용    
+    * Router의 Routing Table을 확인    
+    * 수신된 ICMP의 목적 IP 주소와 매칭되는 네트워크 인터페이스로 수신된 ICMP를 그대로 전달  
+    * 만약 Router가 자신의 서브넷에 포함된 호스트를 목적지로 한 ICMP 메시지를 수신한 경우에는 ARP cache table에서 해당 호스트에 대한 Ethernet address를 이용하여, ICMP 메시지를전달    
 
 5. PC2에 도착한 ICMP는 reply 메시지로, PC1으로 전달됨 
 
