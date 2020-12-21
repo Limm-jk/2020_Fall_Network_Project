@@ -4,10 +4,13 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
@@ -25,7 +28,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 import staticRouting.ARPLayer.ARPCache;
-
+import staticRouting.RoutingTable.RoutingRow;
 
 public class RouterAppLayer extends JFrame implements BaseLayer{
 	public int nUpperLayerCount = 0;
@@ -54,11 +57,15 @@ public class RouterAppLayer extends JFrame implements BaseLayer{
     String proxyModelHeader[] = {"IpAddress", "MacAddress"};
     String[][] proxyModelContents = new String[0][2];
     String routingModelHeader[] = {"Destination", "Netmask", "Gateway", "Flag", "Interface"};
+    
     String[][] routingModelContents = new String[0][5];
 
-    // proxy window
-    private JTextField proxyEntryIp;
-    private JTextField proxyEntryMac;
+    // routing window
+    private JTextField dstTextFeild;
+    private JTextField netmaskTextFeild;
+    private JTextField gatewayTextFeild;
+    private JTextField flagTextFeild;
+    private JTextField interfaceTextFeild;
 
     static int adapterNumber = 0;
     private static LayerManager m_LayerMgr = new LayerManager();
@@ -66,7 +73,6 @@ public class RouterAppLayer extends JFrame implements BaseLayer{
     private static RoutingTable routingTable = new RoutingTable();
     
     public static void main(String[] args) throws IOException {
-    	
     	NILayer[] niLayer = new NILayer[2];
     	EthernetLayer[] ethernetLayer = new EthernetLayer[2];
     	ARPLayer[] arpLayer = new ARPLayer[2];
@@ -126,8 +132,8 @@ public class RouterAppLayer extends JFrame implements BaseLayer{
     	
     	niLayer[0].SetAdapterNumber(0);
     	niLayer[1].SetAdapterNumber(1);
+    	
     }
-
 
     public RouterAppLayer(String pName) throws IOException {
         pLayerName = pName;
@@ -170,45 +176,21 @@ public class RouterAppLayer extends JFrame implements BaseLayer{
         /*-----ARP Panel-----*/
         JPanel ARPPanel = new JPanel();
         ARPPanel.setBorder(new TitledBorder(null, "ARP Cache Table", TitledBorder.CENTER, TitledBorder.TOP, null, null));
-        ARPPanel.setBounds(458, 23, 414, 180);
+        ARPPanel.setBounds(458, 23, 414, 300);
         contentPane.add(ARPPanel);
         ARPPanel.setLayout(null);
 
         arpModel = new DefaultTableModel(arpModelContents, arpModelHeader);
         ARPTable = new JTable(arpModel);
-        ARPTable.setBounds(12, 21, 390, 111);
+        ARPTable.setBounds(12, 21, 390, 200);
         ARPPanel.add(ARPTable);
 
         ArpDelete = new JButton("Delete");
-        ArpDelete.setBounds(139, 139, 136, 30);
+        ArpDelete.setBounds(139, 230, 136, 30);
 //            ProxyDelete.addActionListener(new btnListener());
         ARPPanel.add(ArpDelete);
 
-        /*-----Proxy Panel-----*/
-        JPanel ProxyPanel = new JPanel();
-        ProxyPanel.setBorder(new TitledBorder(null, "Proxy ARP Table", TitledBorder.CENTER, TitledBorder.TOP, null, null));
-        ProxyPanel.setBounds(458, 203, 414, 180);
-        contentPane.add(ProxyPanel);
-        ProxyPanel.setLayout(null);
-
-        proxyModel = new DefaultTableModel(proxyModelContents, proxyModelHeader);
-        ProxyTable = new JTable(proxyModel);
-        ProxyTable.setBounds(12, 21, 390, 111);
-        ProxyPanel.add(ProxyTable);
-
-        ProxyAdd = new JButton("Add");
-        ProxyAdd.setBounds(32, 139, 136, 30);
-        ProxyAdd.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                new proxyWindow();
-            }});
-        ProxyPanel.add(ProxyAdd);
-
-        ProxyDelete = new JButton("Delete");
-        ProxyDelete.setBounds(242, 139, 136, 30);
-//            ProxyDelete.addActionListener(new btnListener());
-        ProxyPanel.add(ProxyDelete);
-
+        
         /*-----Exit / Cancel-----*/
         JButton btnEnd = new JButton("Exit");
         btnEnd.addActionListener(new java.awt.event.ActionListener() {
@@ -228,80 +210,11 @@ public class RouterAppLayer extends JFrame implements BaseLayer{
         btnCancel.setBounds(458, 396, 114, 42);
         contentPane.add(btnCancel);
 
+        routingModel.addRow(routingModelHeader);
         setVisible(true);
     }
 
-    class proxyWindow extends JFrame{
-        public proxyWindow() {
-            setTitle("Proxy ARP");
-            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            setBounds(100, 100, 492, 295);
-            contentPane = new JPanel();
-            contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-            setContentPane(contentPane);
-            contentPane.setLayout(null);
-
-            JLabel ProxyEntryIPLabel = new JLabel("IP Input");
-            ProxyEntryIPLabel.setFont(new Font("font", Font.BOLD, 20));
-            ProxyEntryIPLabel.setBounds(86, 64, 74, 34);
-            contentPane.add(ProxyEntryIPLabel);
-
-            JLabel proxyEntryEthernetLabel = new JLabel("Ethernet Input");
-            proxyEntryEthernetLabel.setFont(new Font("font", Font.BOLD, 20));
-            proxyEntryEthernetLabel.setBounds(31, 112, 129, 34);
-            contentPane.add(proxyEntryEthernetLabel);
-
-            proxyEntryIp = new JTextField();
-            proxyEntryIp.setBounds(172, 64, 223, 30);
-            contentPane.add(proxyEntryIp);
-            proxyEntryIp.setColumns(10);
-
-            proxyEntryMac = new JTextField();
-            proxyEntryMac.setColumns(10);
-            proxyEntryMac.setBounds(172, 117, 223, 30);
-            contentPane.add(proxyEntryMac);
-
-            JButton proxyEntryAddBtn = new JButton("Add");
-            proxyEntryAddBtn.setBounds(104, 191, 97, 23);
-            contentPane.add(proxyEntryAddBtn);
-            proxyEntryAddBtn.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    //entry
-                    String inputIp = proxyEntryIp.getText().trim();
-                    String inputMac = proxyEntryMac.getText().trim();
-
-                    InetAddress ip = null;
-                    try {
-                        ip = InetAddress.getByName(inputIp);
-                    } catch (UnknownHostException e1) {
-                        e1.printStackTrace();
-                    }
-                    byte[] byteIp = ip.getAddress();
-
-//                        byte[] byteMac = macStringToByte(inputMac);
-//                        ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-//
-//                        arpLayer.addProxy(byteIp, byteMac);
-
-                    setVisible(false);
-                }
-            });
-
-            JButton proxyEntryCancelBtn = new JButton("Cancel");
-            proxyEntryCancelBtn.setBounds(266, 191, 97, 23);
-            contentPane.add(proxyEntryCancelBtn);
-            proxyEntryCancelBtn.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    setVisible(false);
-                }
-            });
-
-            setVisible(true);
-        }
-    }
-
+   
     class RoutingWindow extends JFrame{
         public RoutingWindow() {
             setTitle("Routing Table Add");
@@ -317,88 +230,134 @@ public class RouterAppLayer extends JFrame implements BaseLayer{
             DestinationLabel.setBounds(20, 20, 200, 34);
             contentPane.add(DestinationLabel);
 
-            proxyEntryIp = new JTextField();
-            proxyEntryIp.setBounds(172, 22, 223, 30);
-            contentPane.add(proxyEntryIp);
-            proxyEntryIp.setColumns(10);
+            dstTextFeild = new JTextField();
+            dstTextFeild.setBounds(172, 22, 223, 30);
+            contentPane.add(dstTextFeild);
+            dstTextFeild.setColumns(10);
 
             JLabel NetmaskLabel = new JLabel("Netmask");
             NetmaskLabel.setFont(new Font("font", Font.BOLD, 20));
             NetmaskLabel.setBounds(20, 60, 200, 34);
             contentPane.add(NetmaskLabel);
 
-            proxyEntryMac = new JTextField();
-            proxyEntryMac.setColumns(10);
-            proxyEntryMac.setBounds(172, 62, 223, 30);
-            contentPane.add(proxyEntryMac);
+            netmaskTextFeild = new JTextField();
+            netmaskTextFeild.setColumns(10);
+            netmaskTextFeild.setBounds(172, 62, 223, 30);
+            contentPane.add(netmaskTextFeild);
 
             JLabel GatewayLabel = new JLabel("Gateway");
             GatewayLabel.setFont(new Font("font", Font.BOLD, 20));
             GatewayLabel.setBounds(20, 100, 200, 34);
             contentPane.add(GatewayLabel);
 
-            proxyEntryIp = new JTextField();
-            proxyEntryIp.setBounds(172, 102, 223, 30);
-            contentPane.add(proxyEntryIp);
-            proxyEntryIp.setColumns(10);
+            gatewayTextFeild = new JTextField();
+            gatewayTextFeild.setBounds(172, 102, 223, 30);
+            contentPane.add(gatewayTextFeild);
+            gatewayTextFeild.setColumns(10);
 
             JLabel FlagLabel = new JLabel("Flag");
             FlagLabel.setFont(new Font("font", Font.BOLD, 20));
             FlagLabel.setBounds(20, 140, 200, 34);
             contentPane.add(FlagLabel);
 
-            JCheckBox Up_Flag = new JCheckBox("UP");
-            Up_Flag.setBounds(172, 142, 60, 30);
-            contentPane.add(Up_Flag);
+//            JCheckBox Up_Flag = new JCheckBox("UP");
+//            Up_Flag.setBounds(172, 142, 60, 30);
+//            contentPane.add(Up_Flag);
+//
+//            JCheckBox Gate_Flag = new JCheckBox("Gateway");
+//            Gate_Flag.setBounds(242, 142, 90, 30);
+//            contentPane.add(Gate_Flag);
+//
+//            JCheckBox Host_Flag = new JCheckBox("Host");
+//            Host_Flag.setBounds(342, 142, 70, 30);
+//            contentPane.add(Host_Flag);
+            
+            flagTextFeild = new JTextField();
+            flagTextFeild.setBounds(172, 140, 223, 30);
+            contentPane.add(flagTextFeild);
+            flagTextFeild.setColumns(10);
 
-            JCheckBox Gate_Flag = new JCheckBox("Gateway");
-            Gate_Flag.setBounds(242, 142, 90, 30);
-            contentPane.add(Gate_Flag);
-
-            JCheckBox Host_Flag = new JCheckBox("Host");
-            Host_Flag.setBounds(342, 142, 70, 30);
-            contentPane.add(Host_Flag);
-
+            
             JLabel InterfaceLabel = new JLabel("Interface");
             InterfaceLabel.setFont(new Font("font", Font.BOLD, 20));
             InterfaceLabel.setBounds(20, 180, 200, 34);
             contentPane.add(InterfaceLabel);
-            JComboBox InterfaceBox = new JComboBox();
-            InterfaceBox.setBounds(172, 182, 223, 30);
-            contentPane.add(InterfaceBox);
-            proxyEntryIp.setColumns(10);
 
-            JButton proxyEntryAddBtn = new JButton("Add");
-            proxyEntryAddBtn.setBounds(64, 240, 97, 23);
-            contentPane.add(proxyEntryAddBtn);
-            proxyEntryAddBtn.addActionListener(new ActionListener() {
+//            JComboBox InterfaceBox = new JComboBox();
+//            InterfaceBox.setBounds(172, 182, 223, 30);
+//            contentPane.add(InterfaceBox);
+//            proxyEntryIp.setColumns(10);
+            
+            interfaceTextFeild = new JTextField();
+            interfaceTextFeild.setBounds(172, 180, 223, 30);
+            contentPane.add(interfaceTextFeild);
+            interfaceTextFeild.setColumns(10);
+
+
+            JButton routingTableAddBtn = new JButton("Add");
+            routingTableAddBtn.setBounds(64, 240, 97, 23);
+            contentPane.add(routingTableAddBtn);
+            routingTableAddBtn.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     //entry
-                    String inputIp = proxyEntryIp.getText().trim();
-                    String inputMac = proxyEntryMac.getText().trim();
-
+                    String inputDestination = dstTextFeild.getText().trim();
+                    String inputNetmask = netmaskTextFeild.getText().trim();
+                    String inputGateway = gatewayTextFeild.getText().trim();
+                    String inputFlag = flagTextFeild.getText().trim();
+                    String inputInterface = interfaceTextFeild.getText().trim();
+                    
                     InetAddress ip = null;
-                    try {
-                        ip = InetAddress.getByName(inputIp);
-                    } catch (UnknownHostException e1) {
-                        e1.printStackTrace();
-                    }
-                    byte[] byteIp = ip.getAddress();
-
-//                        byte[] byteMac = macStringToByte(inputMac);
-//                        ARPLayer arpLayer = (ARPLayer)m_LayerMgr.GetLayer("ARP");
-//
-//                        arpLayer.addProxy(byteIp, byteMac);
-
+					try {
+						ip = InetAddress.getByName(inputDestination);
+						byte[] dst = ip.getAddress();
+						
+						ip = InetAddress.getByName(inputNetmask);
+						byte[] netmask = ip.getAddress();
+						
+						ip = InetAddress.getByName(inputGateway);
+						byte[] gateway = ip.getAddress();
+						
+						boolean[] flag = new boolean[3];;
+						if(inputFlag.equals("U")) {
+							flag[0] = true;
+							flag[1] = false;
+							flag[2] = false;
+						}
+						else if(inputFlag.equals("UG")) {
+							flag[0] = true;
+							flag[1] = true;
+							flag[2] = false;
+						}
+						else if(inputFlag.equals("UGH")) {
+							flag[0] = true;
+							flag[1] = true;
+							flag[2] = true;
+						}
+						int metric = 1;
+						
+						RoutingRow row = routingTable.getRoutingTableRow(dst, netmask, gateway, flag, inputInterface, metric);
+						routingTable.add(row);
+						
+						if(Arrays.equals(gateway, new byte[4])) {
+							inputGateway = "*";
+						}
+						String StringRow[] = {inputDestination, inputNetmask, inputGateway, inputFlag, inputInterface};
+						routingModel.addRow(StringRow);
+						
+					} catch (UnknownHostException e1) {
+						// TODO 자동 생성된 catch 블록
+						e1.printStackTrace();
+					}
+					
                     setVisible(false);
                 }
             });
 
-            JButton proxyEntryCancelBtn = new JButton("Cancel");
-            proxyEntryCancelBtn.setBounds(266, 240, 97, 23);
-            contentPane.add(proxyEntryCancelBtn);
-            proxyEntryCancelBtn.addActionListener(new ActionListener() {
+            JButton routingTableCancelBtn = new JButton("Cancel");
+            routingTableCancelBtn.setBounds(266, 240, 97, 23);
+            contentPane.add(routingTableCancelBtn);
+            routingTableCancelBtn.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     setVisible(false);
@@ -407,7 +366,6 @@ public class RouterAppLayer extends JFrame implements BaseLayer{
 
             setVisible(true);
         }
-        
     }
     
 	public void updateARPCacheTable(ArrayList<ARPCache> cache_table) {
